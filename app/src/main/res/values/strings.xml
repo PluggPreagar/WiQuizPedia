@@ -1,0 +1,10 @@
+<resources>
+    <string name="app_name">WiQuizPedia</string>
+    <string name="url_et_message">Enter URL</string>
+    <string name="button">Button</string>
+    <string name="textview_message">load question ...</string>
+    <string name="et_answer_message">direct answer ...</string>
+    <string name="cb_answer_1_message">answer 1</string>
+    <string name="cb_answer_2_message">answer 2</string>
+    <string name="cb_answer_3_message">answer 3</string>
+</resources>
