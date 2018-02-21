@@ -8,6 +8,8 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 import java.io.UnsupportedEncodingException;
 import java.net.URL;
+import java.util.HashMap;
+import java.util.Map;
 
 import javax.net.ssl.HttpsURLConnection;
 
@@ -17,7 +19,10 @@ import javax.net.ssl.HttpsURLConnection;
 
 public class DownloadTask2 extends AsyncTask<String, Void, String> {
 
+    private static Map<String,String> cache = new HashMap<String,String>();
     private DownloadCallback<String> mCallback;
+
+    public static String NOCACHE = "NOCACHE";
 
     DownloadTask2(DownloadCallback<String> callback) {
         setCallback(callback);
@@ -33,13 +38,17 @@ public class DownloadTask2 extends AsyncTask<String, Void, String> {
         String result = null;
         if (/*!isCancelled() &&*/ urls != null && urls.length > 0) {
             String urlString = urls[0];
-            try {
-                URL url = new URL(urlString);
-                result = downloadUrl(url);
-                // if (resultString == null) throw new IOException("No response received.");
-            } catch(Exception e) {
-                e.printStackTrace();
-                //throw new IOException(e);
+            result = urls.length>1 && urls[1].contains( NOCACHE) ? null : cache.get( urlString) ;
+            if (null == result ) {
+                try {
+                    URL url = new URL(urlString);
+                    result = downloadUrl(url);
+                    cache.put(urlString, result);
+                    // if (resultString == null) throw new IOException("No response received.");
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    //throw new IOException(e);
+                }
             }
         }
         return result;
