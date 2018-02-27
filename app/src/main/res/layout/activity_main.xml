@@ -11,7 +11,7 @@
         android:layout_width="244dp"
         android:layout_height="wrap_content"
         android:layout_marginStart="16dp"
-        android:layout_marginTop="28dp"
+        android:layout_marginTop="16dp"
         android:ems="10"
         android:inputType="textUri"
         android:text="@string/url_et_message"
@@ -20,48 +20,52 @@
 
     <Button
         android:id="@+id/button"
-        android:layout_width="wrap_content"
+        android:layout_width="50dp"
         android:layout_height="wrap_content"
         android:layout_marginEnd="8dp"
         android:layout_marginStart="20dp"
-        android:layout_marginTop="28dp"
+        android:layout_marginTop="16dp"
         android:onClick="setURL"
-        android:text="@string/button"
+        android:text="?"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintHorizontal_bias="0.722"
         app:layout_constraintStart_toEndOf="@+id/url_et"
         app:layout_constraintTop_toTopOf="parent" />
 
     <TextView
         android:id="@+id/tv_question"
-        android:layout_width="350dp"
+        android:layout_width="299dp"
         android:layout_height="59dp"
         android:layout_marginEnd="8dp"
         android:layout_marginStart="8dp"
-        android:layout_marginTop="8dp"
+        android:layout_marginTop="16dp"
         android:scrollHorizontally="false"
         android:scrollbarAlwaysDrawHorizontalTrack="true"
         android:scrollbarAlwaysDrawVerticalTrack="true"
         android:scrollbars="vertical"
         android:text="@string/textview_message"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.6"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/url_et" />
 
     <EditText
         android:id="@+id/et_answer"
-        android:layout_width="194dp"
-        android:layout_height="0dp"
-        android:layout_marginEnd="16dp"
+        android:layout_width="149dp"
+        android:layout_height="38dp"
+        android:layout_marginStart="8dp"
         android:layout_marginTop="8dp"
+        android:contentDescription="direct .."
         android:ems="10"
         android:inputType="textPersonName"
         android:text="@string/et_answer_message"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/tv_question" />
+        app:layout_constraintStart_toEndOf="@+id/cb_answer_3"
+        app:layout_constraintTop_toBottomOf="@+id/cb_answer_2" />
 
     <CheckBox
         android:id="@+id/cb_answer_1"
+        style="@style/Widget.AppCompat.CompoundButton.CheckBox"
         android:layout_width="144dp"
         android:layout_height="wrap_content"
         android:layout_marginStart="16dp"
@@ -73,17 +77,19 @@
 
     <CheckBox
         android:id="@+id/cb_answer_2"
+        style="@style/Widget.AppCompat.CompoundButton.CheckBox"
         android:layout_width="144dp"
         android:layout_height="wrap_content"
-        android:layout_marginStart="16dp"
+        android:layout_marginStart="8dp"
         android:layout_marginTop="8dp"
         android:buttonTint="@android:color/background_dark"
         android:text="@string/cb_answer_2_message"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/cb_answer_1" />
+        app:layout_constraintStart_toEndOf="@+id/cb_answer_1"
+        app:layout_constraintTop_toBottomOf="@+id/tv_question" />
 
     <CheckBox
         android:id="@+id/cb_answer_3"
+        style="@android:style/Widget.CompoundButton.CheckBox"
         android:layout_width="144dp"
         android:layout_height="wrap_content"
         android:layout_marginStart="16dp"
@@ -91,20 +97,21 @@
         android:buttonTint="@android:color/background_dark"
         android:text="@string/cb_answer_3_message"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/cb_answer_2" />
+        app:layout_constraintTop_toBottomOf="@+id/cb_answer_1" />
 
     <ImageView
         android:id="@+id/imageView"
-        android:layout_width="192dp"
-        android:layout_height="189dp"
-        android:layout_marginBottom="8dp"
+        android:layout_width="289dp"
+        android:layout_height="175dp"
+        android:layout_marginBottom="16dp"
         android:layout_marginEnd="16dp"
+        android:layout_marginStart="16dp"
         android:layout_marginTop="8dp"
         android:scaleType="fitCenter"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/et_answer"
-        app:layout_constraintVertical_bias="0.018"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/cb_answer_3"
         app:srcCompat="@android:color/transparent" />
 
 </android.support.constraint.ConstraintLayout>
