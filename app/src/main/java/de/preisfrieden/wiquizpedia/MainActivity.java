@@ -1,9 +1,7 @@
 package de.preisfrieden.wiquizpedia;
 
+import android.app.Activity;
 import android.content.Context;
-import android.content.Intent;
-import android.content.res.ColorStateList;
-import android.content.res.Resources;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.os.Handler;
@@ -22,8 +20,6 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import java.io.UnsupportedEncodingException;
-import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -44,6 +40,7 @@ public class MainActivity extends AppCompatActivity implements DownloadCallback 
 
      */
 
+    private static Activity gui = null;
     private static Content content = null;
     private static ContentQuery query = null;
 
@@ -57,32 +54,49 @@ public class MainActivity extends AppCompatActivity implements DownloadCallback 
     private static int mode = MODE_AUTO_NEXT;
     private String picTitle;
 
+
+    public static void toast(String text, boolean toast_long ){
+        Toast.makeText(gui, text, toast_long ? Toast.LENGTH_LONG : Toast.LENGTH_SHORT).show();
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        gui = this;
+        setContentView(R.layout.activity_main);
+        ((TextView) findViewById(R.id.tv_question)).setMovementMethod(new ScrollingMovementMethod());
+        EditText urlEt = (EditText) findViewById(R.id.url_et);
+        initCheckbox();
+        initEditText( R.id.url_et);
+        initTextView(R.id.et_answer, true);
         if (null == content) {
             content = new Content();
-            setContentView(R.layout.activity_main);
-            ((TextView) findViewById(R.id.tv_question)).setMovementMethod(new ScrollingMovementMethod());
-            EditText urlEt = (EditText) findViewById(R.id.url_et);
-            initCheckbox();
-            initEditText( R.id.url_et);
-            initTextView(R.id.et_answer, true);
             urlEt.setText("Albert Einstein");
             setURL(null);
+        } else {
+            redraw();
         }
     }
 
     /** Called when the user taps the Send button */
-    public void setURL(View view)   {
-        updateFromDownload((String) null);
-        EditText editText = (EditText) findViewById(R.id.url_et);
+    public void setURL(View view) {
+        resetInputFocus();
+        updateQuery(false);
+    }
+
+    public void resetInputFocus()   {
         findViewById(R.id.url_et).clearFocus();
         findViewById(R.id.tv_question).clearFocus();
         findViewById(R.id.et_answer).clearFocus();
-        closeSoftKeyboard(view);
-        Content.setMode( mode);
-        Content.GetContentData( editText.getText().toString(), this  );
+        closeSoftKeyboard(null);
+    }
+
+
+    public void updateQuery(boolean forceLoadData)   {
+        EditText editText = (EditText) findViewById(R.id.url_et);
+        String curTitle = editText.getText().toString();
+        forceLoadData |=  null == content || curTitle.isEmpty() || !content.title.equals( curTitle);
+        new ContentTask(this).doInBackground(new ContentTaskParam(content, forceLoadData ? curTitle : null ));
     }
 
     public void closeSoftKeyboard(View view) {
@@ -103,32 +117,46 @@ public class MainActivity extends AppCompatActivity implements DownloadCallback 
         } else if (result instanceof  Drawable) {
             ImageView imageView = (ImageView) findViewById(R.id.imageView);
             imageView.setImageDrawable( (Drawable) result);
-        } else if (result instanceof  String){
-            //msg = extractContent(msg);
+        } else if (result instanceof  ContentQuery){
             msg = "loading ...";
-            String msgLoaded = (String) result;
-            query = content.parse(msgLoaded).getQuery(this);
-            if (null == query ){
-                msg = "no query found:\n" + content.msg_orig+")";
-                Toast.makeText( this, "try empty for random page", Toast.LENGTH_LONG).show();
-                setCheckbox( null );
-            } else {
-                EditText editText = (EditText) findViewById(R.id.url_et);
-                editText.setText(query.content.title);
-                setCheckbox( query.answer_token_avail);
-                initTextView(R.id.et_answer, false);
-                if (!editText.getText().toString().equals(picTitle)) {
-                    picTitle = editText.getText().toString();
-                    Content.updatePicFromData( query.content.msg_orig, this);
-                }
-                if (!query.answer_token_id.isEmpty())  msg = query.msg.replaceAll( query.answer_token_id , "___");
-                setButton();
+            query = (ContentQuery) result;
+            content = (null == query) ? null : query.content;
+            redraw();
+        }
+    }
+
+    public void redraw() {
+        String msg = null ;
+        if (null == query ){
+            msg = "no query found:\n" + content.msg_orig+")";
+            Toast.makeText( this, "try empty for random page", Toast.LENGTH_LONG).show();
+            setCheckbox( null );
+        } else {
+            EditText editText = (EditText) findViewById(R.id.url_et);
+            editText.setText(query.content.title);
+            //editText.setHeight( Math.max(1 ,editText.getLineCount()) * editText.getLineHeight());
+            setCheckbox( query.answer_token_avail);
+            initTextView(R.id.et_answer, false);
+            String picTitleNew = editText.getText().toString();
+            if (!picTitleNew.equals(picTitle) && ! picTitleNew.isEmpty()) {
+                picTitle = picTitleNew;
+                // Content.updatePicFromData( query.content.msg_orig, this);
+                Content.updatePicFromData( query.content.title, this);
             }
+            if (!query.answer_token_id.isEmpty())  msg = query.msg.replaceAll( query.answer_token_id , "___");
+            setButton();
         }
 
         TextView textView = (TextView) findViewById(R.id.tv_question);
-        if (null != msg ) textView.setText( msg );
+        if (null != msg ) {
+            textView.setText( msg );
+            //textView.setHeight( Math.max(1,textView.getLineCount() * textView.getLineHeight()));
+            textView.setVisibility( View.VISIBLE);
+            textView.setHeight( Math.max(5,textView.getLineCount()) * textView.getLineHeight());
+
+        }
         closeSoftKeyboard(textView);
+
     }
 
     private void setButton() {
@@ -259,7 +287,8 @@ public class MainActivity extends AppCompatActivity implements DownloadCallback 
         final String placeholder_text = "direct answer ...";
         String text = view.getText().toString();
         String specialInput = "mode";
-        String specialText = placeholder_text;
+        //String specialText = placeholder_text;
+        String specialText = content.title;
         switch (text.toUpperCase()) {
             case "FULL": mode ^= MODE_FULL ; break;
             case "FREE": mode ^= MODE_ALLOW_FREE_INPUT ; break;
@@ -267,13 +296,19 @@ public class MainActivity extends AppCompatActivity implements DownloadCallback 
             case "AUTO": mode ^= MODE_AUTO_NEXT; break;
             default:    specialInput = null;
         }
-        if (null == specialInput ) specialInput = "input";
-        switch (text.toUpperCase()) {
-            case "RANDOM": ;
-            case "*": specialText = "" ; break;
-            default:    specialInput = null;
+        if (null == specialInput ) {
+            specialInput = "input";
+            switch (text.toUpperCase()) {
+                case "RANDOM":
+                case "*":
+                    specialText = "";
+                    break;
+                default:
+                    specialInput = null;
+            }
         }
         if (null!= specialInput && !specialInput.isEmpty()) {
+            Content.setMode( mode);
             Toast.makeText( context, "Enter special " + specialInput + ": " + text, Toast.LENGTH_LONG).show();
             view.setText(specialText);
         }

@@ -22,7 +22,6 @@ import java.util.regex.Pattern;
 public class ContentQuery {
 
     Content content;
-    MainActivity mainActivity;
     private static int max_queries_per_sentence = 0;
 
     boolean first_try = true;
@@ -32,9 +31,8 @@ public class ContentQuery {
     String answer_token = "";
     List<String> answer_token_avail = new ArrayList<String>();
 
-    public ContentQuery( List<String> msg_querable_sentences, Tokens token, Content content, MainActivity mainActivity ) {
+    public ContentQuery( List<String> msg_querable_sentences, Tokens token, Content content ) {
         this.content = content;
-        this.mainActivity = mainActivity;
         if (!msg_querable_sentences.isEmpty()) {
             msg_query_id = new Random().nextInt(msg_querable_sentences.size());
             msg = msg_querable_sentences.get(msg_query_id); // getRandom(msg_querable_sentences);
@@ -83,10 +81,10 @@ public class ContentQuery {
             msg = content.msg_querable_sentences.get(msg_query_id).replace(answer_token_id, answer_token);
             if (msg.contains("__")) {
                 content.msg_querable_sentences.set(msg_query_id, msg);
-                if (!correct && correctAlmost) Toast.makeText( mainActivity , "answer is "+ (!correct && correctAlmost ? "more or less " : "") + "right", Toast.LENGTH_SHORT).show();
+                if (!correct && correctAlmost) MainActivity.toast( "answer is "+ (!correct && correctAlmost ? "more or less " : "") + "right", false);
             } else {
                 content.msg_querable_sentences.remove(msg_query_id);
-                Toast.makeText( mainActivity , "query is "+ (!correct && correctAlmost ? "more or less " : "") + "solved", Toast.LENGTH_LONG).show();
+                MainActivity.toast( "query is "+ (!correct && correctAlmost ? "more or less " : "") + "solved", true );
             }
         }
         first_try = false;

@@ -16,7 +16,7 @@ import java.util.regex.Pattern;
  * Created by peter on 21.02.2018.
  */
 
-public class Content {
+public class Content implements DownloadCallback{
 
     String title = "";
     String msg_orig = "";
@@ -30,12 +30,14 @@ public class Content {
     public static final int MODE_ALLOW_FREE_INPUT = 2; // Query wiht only 1 avail answer
 
     public static Tokens token = new Tokens();
+    private DownloadCallback mCallback;
 
 
-    static public void GetContentData(String query, DownloadCallback callback)   {
+    public void readContentData(String query, DownloadCallback callback)   {
+        mCallback = callback;
         String prop ="";
         String urlStr = "https://de.wikipedia.org/w/api.php?action=query&prop=extracts&exintro=&explaintext=&redirects=&formatversion=2&format=json";
-        urlStr = urlStr.replace("&exrintro=&","exsentences=30");
+        if ( 0 != (Content.mode & MODE_FULL)) urlStr = urlStr.replace("&exintro=&","&exsentences=30&");
         // urlStr = "https://de.wikipedia.org/w/api.php?action=query&exlimit=2&format=json&prop=extracts&explaintext=&formatversion=2&rvprop=content";
         // if ( 0 == (Content.mode & MODE_FULL)) urlStr += "&exintro=";
         // urlStr  = urlStr.replace("&prop=","&prop=revisions|"); // add wiki text
@@ -51,7 +53,7 @@ public class Content {
         // how to download
         // https://stackoverflow.com/questions/3028306/download-a-file-with-android-and-showing-the-progress-in-a-progressdialog
 
-        DownloadTask2 dwnlTask = new DownloadTask2(callback);
+        DownloadTask2 dwnlTask = new DownloadTask2( this );
         if (query.isEmpty()) {
             // https://stackoverflow.com/questions/33614492/wikipedia-api-get-random-pages
             // --> https://en.wikipedia.org/w/api.php?format=json&action=query&generator=random&grnnamespace=0&prop=revisions|images&rvprop=content&grnlimit=10
@@ -107,23 +109,34 @@ public class Content {
     public Content(){
     }
 
+    public void updateFromDownload(Object result) {
+        if (result instanceof String) {
+            String msg = (String) result;
+            parse( msg );
+            mCallback.updateFromDownload(this);
+        }
+    }
 
     public Content parse(String msg){
+        Content content = null;
         if (null != msg_orig && !msg_orig.equals(msg)){
             msg_orig = msg;
             msg_wo_token = msg;
 
             title = parseTitle(msg);
-            parseRef(msg);
+            if (!title.contains(":")){
+                parseRef(msg);
 
-            msg_wo_token = normaliseContent(msg_wo_token);
-            msg_wo_token = extractAndReplaceRef( msg_wo_token);
-            msg_wo_token = extractAndReplaceValues(msg_wo_token );
+                msg_wo_token = normaliseContent(msg_wo_token);
+                msg_wo_token = extractAndReplaceRef( msg_wo_token);
+                msg_wo_token = extractAndReplaceValues(msg_wo_token );
 
-            msg_querable_sentences = extractSentences(msg_wo_token );
-            msg_querable_sentences_total = msg_querable_sentences.size();
+                msg_querable_sentences = extractSentences(msg_wo_token );
+                msg_querable_sentences_total = msg_querable_sentences.size();
+                content = this;
+            }
         }
-        return this;
+        return content;
     }
 
     public String parseTitle(String msg) {
@@ -165,6 +178,7 @@ public class Content {
 
     private String extractAndReplaceValues(String msg) {
         msg = extractAndReplaceTokenByPattern( msg,"Date", "(\\d{2}\\.)\\s*(Januar|Februar|März|April|Mai|Juni|Juli|August|September|Oktober|November|Dezember|\\d{2,4}\\.)\\s*(\\d{2,4})", -1);
+        msg = extractAndReplaceTokenByPattern( msg,"YearMon", "\\b([0-9]{4}/(?:[1-9]|1[012]))\\b", -1);
         msg = extractAndReplaceTokenByPattern( msg,"Year", "\\b([0-9]{4})\\b", -1);
         msg = extractAndReplaceTokenByPattern( msg,"BigNum", "\\b([0-9.]+)\\b", -1);
         msg = extractAndReplaceTokenByPattern( msg,"Real", "\\b([0-9]+)\\b", -1);
@@ -186,11 +200,16 @@ public class Content {
         Random rnd = new Random(System.nanoTime());
         while (m.find()) {
             String value = "";
-            for (int i = 2; i <= m.groupCount(); i++) value += m.group(i);
-            String key = categoryOrId.startsWith("__") ? categoryOrId : token.add( value, categoryOrId);
-            matchLen += m.group(0).length();
+            String key  = "";
             boolean keep = rnd.nextDouble() <= percent2keep;
+            for (int i = 2; i <= m.groupCount(); i++) value += m.group(i);
+            if (value.length()>1) {
+                key = categoryOrId.startsWith("__") ? categoryOrId : token.add(value, categoryOrId);
+            } else {
+                keep = true;
+            }
             matched += keep ? m.group(0) : m.group(1) + key;
+            matchLen += m.group(0).length();
         }
         return 0 == matchLen ? msg : matched + msg.substring(matchLen);
     }
@@ -204,8 +223,8 @@ public class Content {
         return query_sentences;
     }
 
-    public ContentQuery getQuery(MainActivity mainActivity){
-        return new ContentQuery(msg_querable_sentences, token, this, mainActivity);
+    public ContentQuery createQuery(){
+        return null == msg_querable_sentences || msg_querable_sentences.isEmpty() ? null : new ContentQuery(msg_querable_sentences, token, this);
     }
 
 }
