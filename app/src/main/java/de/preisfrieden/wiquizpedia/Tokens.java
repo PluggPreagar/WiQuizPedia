@@ -60,15 +60,20 @@ public class Tokens {
 
     public String add( String token, String category, String link ) {
         int i = addSet( category, token);           //   Date       =>  [ ... 1.1.2001 ]
-        String id = "__" + category + i + "__";     //
+        String id = getId( category , i);     //
         addSet( id, token, link, category);         //   __Date1__  =>  [ 1.1.2001,  NEUJAHR2001, Date ]
         addSet( token, id, link, category );        //   1.1.2001   =>  [ __Date1__, NEUJAHR2001, Date ]
         //if (null != link) addSet(token, link);    //   1.1.2001   =>  [ ........, NEUJAHR2001 ]
         return id;
     }
 
+    public String getId(String category, int idx) {
+        return  "__" + category + idx + "__";
+    }
+
     public ArrayList<String> getTokens4Category(String id) {
-        return get( getOrEmpty(id).get( CATEGORY_IDX));
+        //return get( getOrEmpty(id).get( CATEGORY_IDX));
+        return getOrEmpty(id);
     }
 
     public String getToken4Id(String id) {

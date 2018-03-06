@@ -1,8 +1,5 @@
 package de.preisfrieden.wiquizpedia;
 
-import android.view.View;
-import android.widget.EditText;
-
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.util.ArrayList;
@@ -16,7 +13,7 @@ import java.util.regex.Pattern;
  * Created by peter on 21.02.2018.
  */
 
-public class Content implements DownloadCallback{
+public class Content {
 
     String title = "";
     String msg_orig = "";
@@ -33,41 +30,6 @@ public class Content implements DownloadCallback{
     private DownloadCallback mCallback;
 
 
-    public void readContentData(String query, DownloadCallback callback)   {
-        mCallback = callback;
-        String prop ="";
-        String urlStr = "https://de.wikipedia.org/w/api.php?action=query&prop=extracts&exintro=&explaintext=&redirects=&formatversion=2&format=json";
-        if ( 0 != (Content.mode & MODE_FULL)) urlStr = urlStr.replace("&exintro=&","&exsentences=30&");
-        // urlStr = "https://de.wikipedia.org/w/api.php?action=query&exlimit=2&format=json&prop=extracts&explaintext=&formatversion=2&rvprop=content";
-        // if ( 0 == (Content.mode & MODE_FULL)) urlStr += "&exintro=";
-        // urlStr  = urlStr.replace("&prop=","&prop=revisions|"); // add wiki text
-        // urlStr  = urlStr.replace("&prop=","&prop=revisions|"); // add wiki text to get REFS ..
-
-        // https://de.wikipedia.org/w/api.php?action=query&exlimit=2&format=json&prop=revisions|extracts&explaintext=&titles=Albert_Einstein&redirects=1&formatversion=2&rvprop=content&exlimit=max
-
-        //urlStr += "&rvprop=content";
-
-        // https://en.wikipedia.org/wiki/Special:ApiSandbox#action=query&format=json&prop=categories%7Cimages%7Clinks%7Cextlinks%7Clinkshere&titles=Albert%20Einstein
-        // /w/api.php?action=query&format=json&prop=categories%7Cimages%7Clinks%7Cextlinks%7Clinkshere&titles=Albert%20Einstein
-
-        // how to download
-        // https://stackoverflow.com/questions/3028306/download-a-file-with-android-and-showing-the-progress-in-a-progressdialog
-
-        DownloadTask2 dwnlTask = new DownloadTask2( this );
-        if (query.isEmpty()) {
-            // https://stackoverflow.com/questions/33614492/wikipedia-api-get-random-pages
-            // --> https://en.wikipedia.org/w/api.php?format=json&action=query&generator=random&grnnamespace=0&prop=revisions|images&rvprop=content&grnlimit=10
-            urlStr += "&generator=random";
-            prop = DownloadTask2.NOCACHE;
-        } else {
-            try {
-                urlStr += "&titles=" + URLEncoder.encode(query, "utf-8");
-            } catch (UnsupportedEncodingException e) {
-                e.printStackTrace();
-            }
-        }
-        dwnlTask.execute(urlStr, prop);
-    }
 
     static public void updatePicFromData(String data, DownloadCallback callback) {
         // http://wikimedia.7.x6.nabble.com/What-is-the-Full-URL-of-the-images-returned-by-a-wikipedia-query-td1147620.html
@@ -109,42 +71,78 @@ public class Content implements DownloadCallback{
     public Content(){
     }
 
-    public void updateFromDownload(Object result) {
-        if (result instanceof String) {
-            String msg = (String) result;
-            parse( msg );
-            mCallback.updateFromDownload(this);
-        }
+    public ContentQuery parseUrl(String query) {
+        String data = readContentData(query);
+        parse( data );
+        return createQuery();
     }
 
-    public Content parse(String msg){
-        Content content = null;
+    public String readContentData(String query)   {
+        String prop = "";
+        String urlStr = "https://de.wikipedia.org/w/api.php?action=query&prop=extracts&exintro=&explaintext=&redirects=&formatversion=2&format=json";
+        if ( 0 != (Content.mode & MODE_FULL)) urlStr = urlStr.replace("&exintro=&","&exsentences=50&");
+        // urlStr = "https://de.wikipedia.org/w/api.php?action=query&exlimit=2&format=json&prop=extracts&explaintext=&formatversion=2&rvprop=content";
+        // if ( 0 == (Content.mode & MODE_FULL)) urlStr += "&exintro=";
+        // urlStr  = urlStr.replace("&prop=","&prop=revisions|"); // add wiki text
+        // urlStr  = urlStr.replace("&prop=","&prop=revisions|"); // add wiki text to get REFS ..
+
+        // https://de.wikipedia.org/w/api.php?action=query&exlimit=2&format=json&prop=revisions|extracts&explaintext=&titles=Albert_Einstein&redirects=1&formatversion=2&rvprop=content&exlimit=max
+
+        //urlStr += "&rvprop=content";
+
+        // https://en.wikipedia.org/wiki/Special:ApiSandbox#action=query&format=json&prop=categories%7Cimages%7Clinks%7Cextlinks%7Clinkshere&titles=Albert%20Einstein
+        // /w/api.php?action=query&format=json&prop=categories%7Cimages%7Clinks%7Cextlinks%7Clinkshere&titles=Albert%20Einstein
+
+        // how to download
+        // https://stackoverflow.com/questions/3028306/download-a-file-with-android-and-showing-the-progress-in-a-progressdialog
+
+        if (query.isEmpty()) {
+            // https://stackoverflow.com/questions/33614492/wikipedia-api-get-random-pages
+            // --> https://en.wikipedia.org/w/api.php?format=json&action=query&generator=random&grnnamespace=0&prop=revisions|images&rvprop=content&grnlimit=10
+            urlStr += "&generator=random";
+            prop = DownloadTask2.NOCACHE;
+        } else {
+            try {
+                urlStr += "&titles=" + URLEncoder.encode(query, "utf-8");
+            } catch (UnsupportedEncodingException e) {
+                e.printStackTrace();
+            }
+        }
+
+        Download download = new Download();
+        String data = "";
+        do {
+            data = download.downloadUrl(urlStr, prop);
+            prop = DownloadTask2.NOCACHE;
+        } while (query.isEmpty() && parseTitle(data).contains(":")); // skipp "Diskussion:" "Benutzer:" ... wikipedia-pseudo sites
+
+        return data;
+    }
+
+    protected Content parse(String msg){
         if (null != msg_orig && !msg_orig.equals(msg)){
             msg_orig = msg;
             msg_wo_token = msg;
 
             title = parseTitle(msg);
-            if (!title.contains(":")){
-                parseRef(msg);
+            parseRef(msg);
 
-                msg_wo_token = normaliseContent(msg_wo_token);
-                msg_wo_token = extractAndReplaceRef( msg_wo_token);
-                msg_wo_token = extractAndReplaceValues(msg_wo_token );
+            msg_wo_token = normaliseContent(msg_wo_token);
+            msg_wo_token = extractAndReplaceRef( msg_wo_token);
+            msg_wo_token = extractAndReplaceValues(msg_wo_token );
 
-                msg_querable_sentences = extractSentences(msg_wo_token );
-                msg_querable_sentences_total = msg_querable_sentences.size();
-                content = this;
-            }
+            msg_querable_sentences = extractSentences(msg_wo_token );
+            msg_querable_sentences_total = msg_querable_sentences.size();
         }
-        return content;
+        return this;
     }
 
-    public String parseTitle(String msg) {
-        title = msg.replaceAll("^.*?\"title\":\"", "").replaceAll("\".*", "");
+    protected String parseTitle(String msg) {
+        title = null == msg ? "" : msg.replaceAll("\\n","").replaceAll("^.*?\"title\":\\s*\"", "").replaceAll("\".*", "");
         return title;
     }
 
-    public void parseRef(String msg) {
+    protected void parseRef(String msg) {
         Pattern p = Pattern.compile("\\[\\[([^\"]*?)(?:\\|([^\"]*?))?\\]\\]", Pattern.MULTILINE + Pattern.DOTALL);
         Matcher m = p.matcher(msg);
         while (m.find()) {
@@ -152,7 +150,7 @@ public class Content implements DownloadCallback{
         }
     }
 
-    public String normaliseContent(String msg) {
+    protected String normaliseContent(String msg) {
         // https://cloud.google.com/natural-language/docs/basics#syntactic_analysis
         // msg = msg.replaceFirst("^.*?extract\":\"","").replaceAll("\"}\\]}}?","");
         msg = msg.replaceFirst("^.*?extract\":\"", "");
@@ -163,7 +161,7 @@ public class Content implements DownloadCallback{
         return msg;
     }
 
-    public String extractAndReplaceRef(String msg) {
+    protected String extractAndReplaceRef(String msg) {
         ArrayList<String> refsOrig = token.getTokens4Category("Ref");
         if (null != refsOrig) {
             ArrayList<String> refs = (ArrayList<String>) refsOrig.clone();
@@ -176,8 +174,10 @@ public class Content implements DownloadCallback{
         return msg;
     }
 
-    private String extractAndReplaceValues(String msg) {
+    protected String extractAndReplaceValues(String msg) {
         msg = extractAndReplaceTokenByPattern( msg,"Date", "(\\d{2}\\.)\\s*(Januar|Februar|März|April|Mai|Juni|Juli|August|September|Oktober|November|Dezember|\\d{2,4}\\.)\\s*(\\d{2,4})", -1);
+        msg = extractAndReplaceTokenByPattern( msg,"RangAdj", "\\b((?:zweit|dritt|viert|fünft|sechst|siebent|acht|neun|zehnt|elft|zwölft)(?:größte|kleinste|höchste))\\b", -1);
+        msg = extractAndReplaceTokenByPattern( msg,"RangNum", "\\b[0-9+]\\.\\b", -1);
         msg = extractAndReplaceTokenByPattern( msg,"YearMon", "\\b([0-9]{4}/(?:[1-9]|1[012]))\\b", -1);
         msg = extractAndReplaceTokenByPattern( msg,"Year", "\\b([0-9]{4})\\b", -1);
         msg = extractAndReplaceTokenByPattern( msg,"BigNum", "\\b([0-9.]+)\\b", -1);
@@ -192,7 +192,7 @@ public class Content implements DownloadCallback{
         return msg;
     }
 
-    private String extractAndReplaceTokenByPattern(String msg, String categoryOrId, String pattern, double percent2keep ) {
+    protected String extractAndReplaceTokenByPattern(String msg, String categoryOrId, String pattern, double percent2keep ) {
         String matched = "";
         int matchLen = 0;
         Pattern p = Pattern.compile("(.*?)" + pattern, Pattern.MULTILINE + Pattern.DOTALL);
@@ -214,7 +214,7 @@ public class Content implements DownloadCallback{
         return 0 == matchLen ? msg : matched + msg.substring(matchLen);
     }
 
-    private List<String> extractSentences(String msg) {
+    protected List<String> extractSentences(String msg) {
         String[] sentences = msg.split("\n");
         List<String> query_sentences = new ArrayList<String>();
         for (String sentence : sentences) {

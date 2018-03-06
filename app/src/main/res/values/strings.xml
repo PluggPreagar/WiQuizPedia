@@ -7,4 +7,11 @@
     <string name="cb_answer_1_message">answer 1</string>
     <string name="cb_answer_2_message">answer 2</string>
     <string name="cb_answer_3_message">answer 3</string>
+    <string name="pref_auto_next">open next query after answer</string>
+    <string name="pref_allow_free_input">only multiple choice</string>
+    <string name="pref_only_extract">ask only summary of page</string>
+    <string name="pref_cat_content_title">query content settings</string>
+    <string name="pref_cat_gui_title">gui behaviour</string>
+    <string name="opt_menu_data_refresh">refresh data</string>
+    <string name="opt_menu_settings">settings ...</string>
 </resources>

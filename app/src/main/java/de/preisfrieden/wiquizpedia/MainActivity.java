@@ -2,13 +2,18 @@ package de.preisfrieden.wiquizpedia;
 
 import android.app.Activity;
 import android.content.Context;
+import android.content.Intent;
+import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.os.Handler;
+import android.preference.PreferenceManager;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.text.method.ScrollingMovementMethod;
 import android.view.KeyEvent;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.View.OnKeyListener;
 import android.view.inputmethod.InputMethodManager;
@@ -21,6 +26,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 
@@ -59,11 +65,25 @@ public class MainActivity extends AppCompatActivity implements DownloadCallback 
         Toast.makeText(gui, text, toast_long ? Toast.LENGTH_LONG : Toast.LENGTH_SHORT).show();
     }
 
+    protected void setMode4Preferences(SharedPreferences sp, String name, boolean notNegated, int mode_bit) {
+        mode = notNegated == sp.getBoolean(name , 0 != (mode & mode_bit)) ? mode | mode_bit : mode & ~(mode_bit);
+    }
+
+    protected void readPreferences() {
+        SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
+        setMode4Preferences( sharedPref,"pref_auto_next", true,  MODE_AUTO_NEXT );
+        setMode4Preferences( sharedPref,"pref_only_extract", false,  MODE_FULL );
+        setMode4Preferences( sharedPref,"pref_allow_free_input", true,  MODE_ALLOW_FREE_INPUT );
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        gui = this;
         setContentView(R.layout.activity_main);
+        // setHasOptionsMenu(true); // http://www.programmierenlernenhq.de/tutorial-android-options-menu-in-action-bar/
+        PreferenceManager.setDefaultValues(this, R.xml.preferences, false);
+        readPreferences();
+        gui = this;
         ((TextView) findViewById(R.id.tv_question)).setMovementMethod(new ScrollingMovementMethod());
         EditText urlEt = (EditText) findViewById(R.id.url_et);
         initCheckbox();
@@ -77,6 +97,51 @@ public class MainActivity extends AppCompatActivity implements DownloadCallback 
             redraw();
         }
     }
+
+    // ------------------ options menu ---------
+    //
+    //   http://viralpatel.net/blogs/android-preferences-activity-example/
+    //
+
+    private static final int RESULT_SETTINGS = 1;
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        // http://viralpatel.net/blogs/android-preferences-activity-example/
+        getMenuInflater().inflate(R.menu.menu_pref_fragment, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+
+            case R.id.opt_menu_data_refresh:
+            case R.id.opt_menu_settings:
+                Intent i = new Intent(this, SettingsActivity.class);
+                startActivityForResult(i, RESULT_SETTINGS);
+                break;
+
+        }
+
+        return true;
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        switch (requestCode) {
+            case RESULT_SETTINGS:
+                readPreferences();
+                toast("got settings ... mode = " + mode,true);
+                break;
+
+        }
+
+    }
+
+    // ------------------------------------------------------------------------------
 
     /** Called when the user taps the Send button */
     public void setURL(View view) {
@@ -96,7 +161,7 @@ public class MainActivity extends AppCompatActivity implements DownloadCallback 
         EditText editText = (EditText) findViewById(R.id.url_et);
         String curTitle = editText.getText().toString();
         forceLoadData |=  null == content || curTitle.isEmpty() || !content.title.equals( curTitle);
-        new ContentTask(this).doInBackground(new ContentTaskParam(content, forceLoadData ? curTitle : null ));
+        new ContentTask(this).execute(new ContentTaskParam(content, forceLoadData ? curTitle : null ));
     }
 
     public void closeSoftKeyboard(View view) {
@@ -112,13 +177,14 @@ public class MainActivity extends AppCompatActivity implements DownloadCallback 
 
     @Override
     public void updateFromDownload(Object result) {
-        String msg = null ;
         if ( null == result) {
+            ImageView imageView = (ImageView) findViewById(R.id.imageView);
+            imageView.setVisibility( View.INVISIBLE);
         } else if (result instanceof  Drawable) {
             ImageView imageView = (ImageView) findViewById(R.id.imageView);
             imageView.setImageDrawable( (Drawable) result);
+            imageView.setVisibility( View.VISIBLE);
         } else if (result instanceof  ContentQuery){
-            msg = "loading ...";
             query = (ContentQuery) result;
             content = (null == query) ? null : query.content;
             redraw();
@@ -272,7 +338,7 @@ public class MainActivity extends AppCompatActivity implements DownloadCallback 
                 public boolean onKey(View v, int keyCode, KeyEvent event) {
                     if (event.getAction() == KeyEvent.ACTION_DOWN && keyCode == KeyEvent.KEYCODE_ENTER) {
                         EditText answer = (EditText) findViewById(R.id.url_et);
-                        String text = MainActivity.checkText( answer, MainActivity.this );
+                        MainActivity.checkText( answer, MainActivity.this );
                         setURL(v);
                         return true;
                     }
@@ -290,9 +356,9 @@ public class MainActivity extends AppCompatActivity implements DownloadCallback 
         //String specialText = placeholder_text;
         String specialText = content.title;
         switch (text.toUpperCase()) {
-            case "FULL": mode ^= MODE_FULL ; break;
+            case "FULL": mode ^= MODE_FULL ; content = new Content(); break;
             case "FREE": mode ^= MODE_ALLOW_FREE_INPUT ; break;
-            case "HARD": mode ^= MODE_ALLOW_FREE_INPUT + MODE_FULL; break;
+            case "HARD": mode ^= MODE_ALLOW_FREE_INPUT + MODE_FULL;  content = new Content(); break;
             case "AUTO": mode ^= MODE_AUTO_NEXT; break;
             default:    specialInput = null;
         }
@@ -314,6 +380,28 @@ public class MainActivity extends AppCompatActivity implements DownloadCallback 
         }
         view.clearFocus();
         return text;
+    }
+
+    // https://stackoverflow.com/questions/8430805/clicking-the-back-button-twice-to-exit-an-activity#13578600
+    boolean doubleBackToExitPressedOnce = false;
+
+    @Override
+    public void onBackPressed() {
+        if (doubleBackToExitPressedOnce) {
+            super.onBackPressed();
+            return;
+        }
+
+        this.doubleBackToExitPressedOnce = true;
+        Toast.makeText(this, "Please click BACK again to exit", Toast.LENGTH_SHORT).show();
+
+        new Handler().postDelayed(new Runnable() {
+
+            @Override
+            public void run() {
+                doubleBackToExitPressedOnce=false;
+            }
+        }, 2000);
     }
 
 }

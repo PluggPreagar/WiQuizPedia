@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:tools="http://schemas.android.com/tools"
+    xmlns:android="http://schemas.android.com/apk/res/android">
+
+
+    <PreferenceCategory android:title="@string/pref_cat_content_title">
+        <CheckBoxPreference
+            android:defaultValue="false"
+            android:key="pref_allow_free_input"
+            android:title="@string/pref_allow_free_input" />
+
+        <CheckBoxPreference
+            android:defaultValue="true"
+            android:key="pref_only_extract"
+            android:title="@string/pref_only_extract" />
+
+    </PreferenceCategory>
+
+    <PreferenceCategory android:title="@string/pref_cat_gui_title">
+        <CheckBoxPreference
+            android:defaultValue="true"
+            android:key="pref_auto_next"
+            android:title="@string/pref_auto_next" />
+
+    </PreferenceCategory>
+
+</PreferenceScreen>

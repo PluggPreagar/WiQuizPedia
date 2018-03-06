@@ -31,7 +31,6 @@ public class DownloadTask2 extends AsyncTask<String, Void, String> {
         mCallback = callback;
     }
 
-
     @Override
     protected String doInBackground(String... urls) {
         Download download = new Download();
