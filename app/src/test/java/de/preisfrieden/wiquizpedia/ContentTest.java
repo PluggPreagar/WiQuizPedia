@@ -260,9 +260,12 @@ public class ContentTest extends Content {
         assertEquals( msg2 , String.join(";", refs));
 
         int idxNat = refs.indexOf("Maltesische Fußballnationalmannschaft");
-        String id = token.getId( "Ref" , idxNat);
+        String id = token.getId( "Ref" , 15 /*idxNat*/ );
         //Maltesische Fußballnationalmannschaft|Nationalmannschaft
-        assertEquals("Nationalmannschaft", token.getToken4Id(id));
+        assertEquals("Nationalmannschaft", token.getRef4CategoryOfToken(id));
+
+        String msgtst=" as {{ bb {{ sfs }} fh}} sfd";
+        String msgtst2 = msgtst.replaceAll("\\{\\{[^\\}]*\\}\\}", ""); // {{..}}
 
         String normCont = normaliseContent(msg);
         String normaliseContent2 ="'''George Mallia''' (* [[10. Oktober]] [[1978]] in [[Sliema]]) ist ein maltesischer Fußballspieler.\\n" +
@@ -275,7 +278,7 @@ public class ContentTest extends Content {
                 "Mallia begann seine Karriere in der [[__REF__]] bei [[__REF__]]. Dort spielte er vier Jahre und wechselte im Sommer __YEAR__ zu [[__REF__]]. " +
                 "Seit Sommer __YEAR__ spielt er bei [[__REF__]]. Für die [[__REF__]] kam er seit __YEAR__ auf __NUM__ Einsätze.\\n"
                 ;
-        assertEquals( normCont, normaliseContent);
+        assertEquals( normaliseContent, normCont);
 
     }
 }

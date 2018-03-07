@@ -51,7 +51,7 @@ public class Tokens {
         if (null == valueList) valueList = new ValueList();
         valueList.addAll(Arrays.asList(values) );
         put(key,valueList);
-        return valueList.size();
+        return valueList.size()-1;
     }
 
     public String add( String token, String category) {
@@ -83,6 +83,11 @@ public class Tokens {
     public List<String> getValues4CategoryOfToken(String token) {
         // return new ArrayList<String>(new HashSet<String>(get(getOrEmpty(token).get(CATEGORY_IDX))));  // uniq values ...
         return get(getOrEmpty(token).get(CATEGORY_IDX));
+    }
+
+    public String getRef4CategoryOfToken(String token) {
+        // return new ArrayList<String>(new HashSet<String>(get(getOrEmpty(token).get(CATEGORY_IDX))));  // uniq values ...
+        return getOrEmpty(token).get(REF_IDX);
     }
 
     public void clear(){

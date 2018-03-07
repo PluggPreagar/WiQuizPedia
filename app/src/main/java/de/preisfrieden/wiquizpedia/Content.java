@@ -153,8 +153,15 @@ public class Content {
     protected String normaliseContent(String msg) {
         // https://cloud.google.com/natural-language/docs/basics#syntactic_analysis
         // msg = msg.replaceFirst("^.*?extract\":\"","").replaceAll("\"}\\]}}?","");
-        msg = msg.replaceFirst("^.*?extract\":\"", "");
+        msg = msg.replaceAll("^\\s.*","").replaceAll("\\n","");
+        msg = msg.replaceFirst("^.*?extract\":\\s*\"", "");
+        msg = msg.replaceFirst("^.*?content\":\\s*\"", "");
         msg = msg.replaceAll("[^.]+$", "");
+        Pattern braces = Pattern.compile("\\{\\{[^\\{]*?\\}\\}");
+        while( braces.matcher( msg).find() ) {
+        //while( msg.matches("\\{\\{[^\\{]*?\\}\\}") ) {
+            msg = msg.replaceAll("\\{\\{[^\\{]*?\\}\\}", ""); // {{..}}
+        }
         msg = msg.replaceAll("\\\\n", "\n");
         msg = msg.replaceAll("(\\d{2}\\.)\\s+(Januar|Februar|März|April|Mai|Juni|Juli|August|September|Oktober|November|Dezember)\\s*(\\d{2,4})", "$1$2$3"); // 14. März 1879 -> 14.März.1879 sep Date from End of Sentencte
         msg = msg.replaceAll("(?<!\\d)\\.\\s", ".\n");
