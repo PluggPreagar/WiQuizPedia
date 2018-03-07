@@ -20,9 +20,11 @@ public class Content {
     String msg_wo_token = "";
     List<String> msg_querable_sentences = new ArrayList<String>();
     int msg_querable_sentences_total = 0;
+    List<ContentQuery> recentQuery = new ArrayList<ContentQuery>();
 
     public static Tokens token = new Tokens();
     private DownloadCallback mCallback;
+    private static Random random = new Random(System.nanoTime());
 
 
 
@@ -47,7 +49,7 @@ public class Content {
                             imageUrls.add( row.replaceAll("^.*\"url\":\\s*\"", "").replaceAll("\".*$", ""));
                     }
                     DownloadDrawable downloadTask = new DownloadDrawable(callback);
-                    if (!imageUrls.isEmpty()) downloadTask.execute(imageUrls.get(new Random(System.nanoTime()).nextInt( imageUrls.size())));
+                    if (!imageUrls.isEmpty()) downloadTask.execute(imageUrls.get(random.nextInt( imageUrls.size())));
                 }
             }
         }
@@ -72,6 +74,7 @@ public class Content {
         }
         return urlString ;
     }
+
 
     public ContentQuery parseUrl(String query) {
         String data = readContentData(query);
@@ -201,6 +204,27 @@ public class Content {
             msg = extractAndReplaceTokenByPattern( msg,"die", "\\b(die)(\\s+[A-Z][^,. ]+)\\b", 0.75);
             msg = extractAndReplaceTokenByPattern( msg,"das", "\\b(das)(\\s+[A-Z][^,. ]+)\\b", 0.75);
         }
+
+        // add dummy years ...
+
+        ArrayList<String> years = new ArrayList<String>(token.emptyIfNull(token.getTokens4Category("Year"))); // clone, as we will sort ..
+        if (!years.isEmpty() && years.size() < 5){
+            Collections.sort(years);
+            Integer minYear = Integer.valueOf(years.get(0));
+            Integer maxYear = Integer.valueOf(years.get(years.size()-1));
+            if (minYear.equals(maxYear)) maxYear = (int) (( (double) maxYear + 10  ) * 1.05);
+            Integer diffYear = maxYear - minYear;
+            Integer minminYear = minYear - ((int)(diffYear *  0.2) + 1) ;
+            Integer maxmaxYear = maxYear + ((int)(diffYear *  0.2) + 1) ;
+            int size = 0;
+            while (size<3) {
+                String year = String.valueOf(minminYear + random.nextInt( (int) (maxmaxYear-minminYear)));
+                size = token.getIdx(token.add(year, "Year"));
+            }
+
+        }
+
+
         // TODO remove groups wo option
         return msg;
     }
@@ -210,11 +234,10 @@ public class Content {
         int matchLen = 0;
         Pattern p = Pattern.compile("(.*?)" + pattern, Pattern.MULTILINE + Pattern.DOTALL);
         Matcher m = p.matcher(msg);
-        Random rnd = new Random(System.nanoTime());
         while (m.find()) {
             String value = "";
             String key  = "";
-            boolean keep = rnd.nextDouble() <= percent2keep;
+            boolean keep = random.nextDouble() <= percent2keep;
             for (int i = 2; i <= m.groupCount(); i++) value += m.group(i);
             if (value.length()>1) {
                 key = categoryOrId.startsWith("__") ? categoryOrId : token.add(value, categoryOrId);
@@ -237,7 +260,17 @@ public class Content {
     }
 
     public ContentQuery createQuery(){
-        return null == msg_querable_sentences || msg_querable_sentences.isEmpty() ? null : new ContentQuery(msg_querable_sentences, token, this);
+        ContentQuery query = null;
+        if (null != msg_querable_sentences && !msg_querable_sentences.isEmpty()){
+            if (recentQuery.size()>20) recentQuery = recentQuery.subList( recentQuery.size() - 10 , recentQuery.size());
+            query = new ContentQuery(msg_querable_sentences,  token, this);
+            if (null != query) recentQuery.add(query);
+        }
+        return query;
+    }
+
+    public ContentQuery getLastQuery(){
+        return recentQuery.isEmpty() ? createQuery() : recentQuery.remove(recentQuery.size()-1);
     }
 
 }

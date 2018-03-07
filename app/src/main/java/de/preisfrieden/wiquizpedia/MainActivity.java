@@ -83,22 +83,35 @@ public class MainActivity extends AppCompatActivity implements DownloadCallback 
 
         swipeTouchListener = new OnSwipeTouchListener(MainActivity.this) {
             public void onSwipeTop() {
-                Toast.makeText(getApplicationContext(), ("TOP"), Toast.LENGTH_SHORT).show();
+                MainActivity.toast("merge with next sentence",false);
+                updateFromDownload( query.mergeWithNextSentence());
             }
 
             public void onSwipeRight() {
-                Toast.makeText(getApplicationContext(), ("Right"), Toast.LENGTH_SHORT).show();
+                Toast.makeText(getApplicationContext(), ("last query"), Toast.LENGTH_SHORT).show();
+                updateFromDownload( content.getLastQuery());
             }
 
             public void onSwipeLeft() {
-                Toast.makeText(getApplicationContext(), ("Left"), Toast.LENGTH_SHORT).show();
+                Toast.makeText(getApplicationContext(), ("next query"), Toast.LENGTH_SHORT).show();
                 setURL(null);
             }
 
             public void onSwipeBottom() {
-                Toast.makeText(getApplicationContext(), ("Zufälliger Artikel"), Toast.LENGTH_SHORT).show();
+                MainActivity.toast("random page",false);
+                ImageView imageView = (ImageView) findViewById(R.id.imageView);
+                imageView.setVisibility( View.INVISIBLE);
                 ((EditText) findViewById(R.id.url_et)).setText("");
                 setURL(null);
+            }
+
+            @Override
+            public boolean onSingleTapUp2() {
+                MainActivity.toast("Tap", false);
+                TextView textView = (TextView) findViewById(R.id.tv_question);
+                MainActivity.toast("Tap: " + textView.getLineCount() + "*" + textView.getLineHeight() , false);
+                textView.setHeight( textView.getHeight() + textView.getLineHeight());
+                return true;
             }
 
             @Override
@@ -122,7 +135,7 @@ public class MainActivity extends AppCompatActivity implements DownloadCallback 
         imageView.setOnTouchListener( swipeTouchListener);
 
         EditText urlEt = (EditText) findViewById(R.id.url_et);
-        urlEt.setOnTouchListener(swipeTouchListener);
+        //urlEt.setOnTouchListener(swipeTouchListener);
 
         initCheckbox();
         initEditText( R.id.url_et);
@@ -155,6 +168,18 @@ public class MainActivity extends AppCompatActivity implements DownloadCallback 
         switch (item.getItemId()) {
 
             case R.id.opt_menu_data_refresh:
+                String url = "https://github.com/PluggPreagar/WiQuizPedia/blob/master/app/build/outputs/apk/debug/app-debug.apk?raw=true";
+                toast("get new version ..", true);
+                try {
+                    Intent myIntent = new Intent(Intent.ACTION_VIEW, Uri.parse( url ));
+                    startActivity(myIntent);
+                } catch (ActivityNotFoundException e) {
+                    Toast.makeText(this, "No application can handle this request."
+                            + " Please install a webbrowser",  Toast.LENGTH_LONG).show();
+                    e.printStackTrace();
+                }
+
+                break;
             case R.id.opt_menu_settings:
                 Intent i = new Intent(this, SettingsActivity.class);
                 startActivityForResult(i, RESULT_SETTINGS);
@@ -259,7 +284,7 @@ public class MainActivity extends AppCompatActivity implements DownloadCallback 
             textView.setText( msg );
             //textView.setHeight( Math.max(1,textView.getLineCount() * textView.getLineHeight()));
             textView.setVisibility( View.VISIBLE);
-            textView.setHeight( Math.max(5,textView.getLineCount()) * textView.getLineHeight());
+            textView.setHeight( Math.max(5,textView.getLineCount()+1) * textView.getLineHeight());
             // kludge - getLineCount is not available immediately ...
             new Handler().postDelayed(new Runnable() {
 
@@ -267,7 +292,7 @@ public class MainActivity extends AppCompatActivity implements DownloadCallback 
                 public void run() {
                     //toast("setHeight ..." , false);
                     TextView textView = (TextView) findViewById(R.id.tv_question);
-                    textView.setHeight( Math.max(5,textView.getLineCount()) * textView.getLineHeight());
+                    textView.setHeight( Math.max(5,textView.getLineCount()+1) * textView.getLineHeight());
                     //toast("setHeight ... Done " , true);
                 }
             }, 2000);

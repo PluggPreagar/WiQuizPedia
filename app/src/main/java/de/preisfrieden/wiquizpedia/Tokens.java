@@ -70,6 +70,9 @@ public class Tokens {
     public String getId(String category, int idx) {
         return  "__" + category + idx + "__";
     }
+    public int getIdx(String id) {
+        return  Integer.valueOf(id.replaceAll("[^0-9]+",""));
+    }
 
     public ArrayList<String> getTokens4Category(String id) {
         //return get( getOrEmpty(id).get( CATEGORY_IDX));

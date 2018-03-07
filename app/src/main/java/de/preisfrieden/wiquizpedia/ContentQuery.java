@@ -29,11 +29,13 @@ public class ContentQuery {
     String answer_token_id = "";
     String answer_token = "";
     List<String> answer_token_avail = new ArrayList<String>();
+    static Random random = new Random(System.nanoTime());
+
+
 
     public ContentQuery( List<String> msg_querable_sentences, Tokens token, Content content ) {
         this.content = content;
         if (!msg_querable_sentences.isEmpty()) {
-            Random random = new Random(System.nanoTime());
 
             msg_query_id = random.nextInt(msg_querable_sentences.size());
             msg = msg_querable_sentences.get(msg_query_id); // getRandom(msg_querable_sentences);
@@ -101,6 +103,16 @@ public class ContentQuery {
         }
         first_try = false;
         return correctAlmost;
+    }
+
+    public ContentQuery mergeWithNextSentence() {
+        List<String> sentences = content.msg_querable_sentences;
+        if (sentences.size() > msg_query_id) {
+            msg += " " + sentences.get(msg_query_id + 1);
+            sentences.set(msg_query_id, msg);
+            sentences.remove(msg_query_id+1);
+        }
+        return this;
     }
 
 }
