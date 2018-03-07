@@ -250,7 +250,7 @@ public class MainActivity extends AppCompatActivity implements DownloadCallback 
                 // Content.updatePicFromData( query.content.msg_orig, this);
                 Content.updatePicFromData( query.content.title, this);
             }
-            if (!query.answer_token_id.isEmpty())  msg = query.msg.replaceAll( query.answer_token_id , "__?__").replaceAll( "__[a-zA-Z0-9]+__" , "__");
+            if (!query.answer_token_id.isEmpty())  msg = query.msg.replaceAll( query.answer_token_id , "____").replaceAll( "__[a-zA-Z0-9]+__" , " ... ");
             setButton();
         }
 
