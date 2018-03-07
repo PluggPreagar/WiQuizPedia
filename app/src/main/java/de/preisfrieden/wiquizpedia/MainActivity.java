@@ -1,19 +1,23 @@
 package de.preisfrieden.wiquizpedia;
 
 import android.app.Activity;
+import android.content.ActivityNotFoundException;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
+import android.net.Uri;
 import android.os.Handler;
 import android.preference.PreferenceManager;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.text.method.ScrollingMovementMethod;
+import android.view.GestureDetector;
 import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.OnKeyListener;
 import android.view.inputmethod.InputMethodManager;
@@ -30,7 +34,8 @@ import java.util.Collections;
 import java.util.List;
 
 
-public class MainActivity extends AppCompatActivity implements DownloadCallback {
+
+public class MainActivity extends AppCompatActivity implements DownloadCallback , GestureDetector.OnGestureListener {
 
 
     /*
@@ -52,10 +57,12 @@ public class MainActivity extends AppCompatActivity implements DownloadCallback 
 
     private List<CheckBox> checkBoxes = new ArrayList<CheckBox>();
 
+    GestureDetector gestureDetector;
     public static final String EXTRA_MESSAGE = "com.example.myfirstapp.MESSAGE";
 
-
     private String picTitle;
+
+    OnSwipeTouchListener swipeTouchListener;
 
 
     public static void toast(String text, boolean toast_long ){
@@ -66,13 +73,57 @@ public class MainActivity extends AppCompatActivity implements DownloadCallback 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        gestureDetector = new GestureDetector( this);
+
         setContentView(R.layout.activity_main);
         // setHasOptionsMenu(true); // http://www.programmierenlernenhq.de/tutorial-android-options-menu-in-action-bar/
         PreferenceManager.setDefaultValues(this, R.xml.preferences, false);
         Settings.readPreferences( this );
         gui = this;
-        ((TextView) findViewById(R.id.tv_question)).setMovementMethod(new ScrollingMovementMethod());
+
+        swipeTouchListener = new OnSwipeTouchListener(MainActivity.this) {
+            public void onSwipeTop() {
+                Toast.makeText(getApplicationContext(), ("TOP"), Toast.LENGTH_SHORT).show();
+            }
+
+            public void onSwipeRight() {
+                Toast.makeText(getApplicationContext(), ("Right"), Toast.LENGTH_SHORT).show();
+            }
+
+            public void onSwipeLeft() {
+                Toast.makeText(getApplicationContext(), ("Left"), Toast.LENGTH_SHORT).show();
+                setURL(null);
+            }
+
+            public void onSwipeBottom() {
+                Toast.makeText(getApplicationContext(), ("Zufälliger Artikel"), Toast.LENGTH_SHORT).show();
+                ((EditText) findViewById(R.id.url_et)).setText("");
+                setURL(null);
+            }
+
+            @Override
+            public void onLongPress2() {
+
+            }
+
+            @Override
+            public boolean onDoubleTap2() {
+                Toast.makeText(getApplicationContext(), ("open external"), Toast.LENGTH_SHORT).show();
+                callUrl4Content();
+                return true;
+            }
+        };
+
+        TextView tv_question = (TextView) findViewById(R.id.tv_question);
+        tv_question.setMovementMethod(new ScrollingMovementMethod());
+        tv_question.setOnTouchListener( swipeTouchListener);
+
+        ImageView imageView = (ImageView) findViewById(R.id.imageView);
+        imageView.setOnTouchListener( swipeTouchListener);
+
         EditText urlEt = (EditText) findViewById(R.id.url_et);
+        urlEt.setOnTouchListener(swipeTouchListener);
+
         initCheckbox();
         initEditText( R.id.url_et);
         initTextView(R.id.et_answer, true);
@@ -199,7 +250,7 @@ public class MainActivity extends AppCompatActivity implements DownloadCallback 
                 // Content.updatePicFromData( query.content.msg_orig, this);
                 Content.updatePicFromData( query.content.title, this);
             }
-            if (!query.answer_token_id.isEmpty())  msg = query.msg.replaceAll( query.answer_token_id , "___");
+            if (!query.answer_token_id.isEmpty())  msg = query.msg.replaceAll( query.answer_token_id , "__?__").replaceAll( "__[a-zA-Z0-9]+__" , "__");
             setButton();
         }
 
@@ -209,6 +260,15 @@ public class MainActivity extends AppCompatActivity implements DownloadCallback 
             //textView.setHeight( Math.max(1,textView.getLineCount() * textView.getLineHeight()));
             textView.setVisibility( View.VISIBLE);
             textView.setHeight( Math.max(5,textView.getLineCount()) * textView.getLineHeight());
+            // kludge - getLineCount is not available immediately ...
+            new Handler().postDelayed(new Runnable() {
+
+                @Override
+                public void run() {
+                    TextView textView = (TextView) findViewById(R.id.tv_question);
+                    textView.setHeight( Math.max(5,textView.getLineCount()) * textView.getLineHeight());
+                }
+            }, 2000);
 
         }
         closeSoftKeyboard(textView);
@@ -393,4 +453,71 @@ public class MainActivity extends AppCompatActivity implements DownloadCallback 
         }, 2000);
     }
 
+    // ------------------------------------------------------
+    //
+    //
+
+    public void callUrl4Content() {
+        try {
+            Intent myIntent = new Intent(Intent.ACTION_VIEW, Uri.parse( content.getURL2View() ));
+            startActivity(myIntent);
+        } catch (ActivityNotFoundException e) {
+            Toast.makeText(this, "No application can handle this request."
+                    + " Please install a webbrowser",  Toast.LENGTH_LONG).show();
+            e.printStackTrace();
+        }
+    }
+
+
+    // ------------------------------------------------------
+    //
+    //      Swipe Gesture ...
+    //
+    //      http://mrbool.com/how-to-work-with-swipe-gestures-in-android/28088
+    //      https://stackoverflow.com/questions/7919865/detecting-a-long-press-with-android
+    //
+
+    @Override
+    public boolean onTouchEvent(MotionEvent event) {
+        return gestureDetector.onTouchEvent(event);
+    }
+
+    @Override
+    public boolean onDown(MotionEvent motionEvent) {
+        Toast.makeText(getApplicationContext(), (" - down "), Toast.LENGTH_SHORT).show();
+        return false;
+    }
+
+    @Override
+    public void onShowPress(MotionEvent motionEvent) {
+        Toast.makeText(getApplicationContext(), (" - press "), Toast.LENGTH_SHORT).show();
+
+    }
+
+    @Override
+    public boolean onSingleTapUp(MotionEvent motionEvent) {
+        Toast.makeText(getApplicationContext(), (" - tap "), Toast.LENGTH_SHORT).show();
+
+        return false;
+    }
+
+    @Override
+    public boolean onScroll(MotionEvent motionEvent, MotionEvent motionEvent1, float v, float v1) {
+        //Toast.makeText(getApplicationContext(), (" - scroll "), Toast.LENGTH_SHORT).show();
+        return false;
+    }
+
+    @Override
+    public void onLongPress(MotionEvent motionEvent) {
+        Toast.makeText(getApplicationContext(), (" - long press "), Toast.LENGTH_SHORT).show();
+
+
+    }
+
+    @Override
+    public boolean onFling(MotionEvent motionEvent, MotionEvent motionEvent1, float v, float v1) {
+        // Toast.makeText(getApplicationContext(), (" - fling "), Toast.LENGTH_SHORT).show();
+
+        return false;
+    }
 }

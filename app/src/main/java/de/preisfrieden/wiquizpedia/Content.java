@@ -63,6 +63,16 @@ public class Content {
     public Content(){
     }
 
+    public String getURL2View(){
+        String urlString = "";
+        try {
+            urlString = "https://de.wikipedia.org/wiki/" + URLEncoder.encode(title.replaceAll(" ","_"), "utf-8") ;
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+        }
+        return urlString ;
+    }
+
     public ContentQuery parseUrl(String query) {
         String data = readContentData(query);
         parse( data );

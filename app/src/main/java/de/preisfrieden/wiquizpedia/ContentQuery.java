@@ -61,10 +61,14 @@ public class ContentQuery {
                 content.msg_querable_sentences.set(msg_query_id, msg);
             }
 
-            for(String tokenId2repl : tokenIdFound) {
-                String token2repl = token.getToken4Id( tokenId2repl);
-                while( values4CategoryOfToken.remove( token2repl));
-                msg = msg.replaceAll( tokenId2repl, token2repl);
+            if (0 != (Settings.mode & Settings.MODE_TOKEN_FILL_ALL_SENTENCE)) {
+                for (String tokenId2repl : tokenIdFound) {
+                    String token2repl = token.getToken4Id(tokenId2repl);
+                    if (0 == (Settings.mode & Settings.MODE_TOKEN_FILL_OTHER_TYPE_SENTENCE) || !values4CategoryOfToken.contains(token2repl) ) {
+                        while (values4CategoryOfToken.remove(token2repl)) ;
+                        msg = msg.replaceAll(tokenId2repl, token2repl);
+                    }
+                }
             }
 
             answer_token_avail = new ArrayList<String>( Arrays.asList(answer_token));
