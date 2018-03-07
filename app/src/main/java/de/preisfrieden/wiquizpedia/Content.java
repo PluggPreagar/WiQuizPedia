@@ -47,7 +47,7 @@ public class Content {
                             imageUrls.add( row.replaceAll("^.*\"url\":\\s*\"", "").replaceAll("\".*$", ""));
                     }
                     DownloadDrawable downloadTask = new DownloadDrawable(callback);
-                    if (!imageUrls.isEmpty()) downloadTask.execute(imageUrls.get(new Random().nextInt( imageUrls.size())));
+                    if (!imageUrls.isEmpty()) downloadTask.execute(imageUrls.get(new Random(System.nanoTime()).nextInt( imageUrls.size())));
                 }
             }
         }
