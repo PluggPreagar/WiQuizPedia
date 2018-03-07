@@ -22,7 +22,6 @@ import java.util.regex.Pattern;
 public class ContentQuery {
 
     Content content;
-    private static int max_queries_per_sentence = 0;
 
     boolean first_try = true;
     int msg_query_id;
@@ -35,6 +34,7 @@ public class ContentQuery {
         this.content = content;
         if (!msg_querable_sentences.isEmpty()) {
             Random random = new Random(System.nanoTime());
+
             msg_query_id = random.nextInt(msg_querable_sentences.size());
             msg = msg_querable_sentences.get(msg_query_id); // getRandom(msg_querable_sentences);
 
@@ -43,15 +43,20 @@ public class ContentQuery {
             Matcher matchTokenId = pTokenId.matcher(msg);
             while (matchTokenId.find()) tokenIdFound.add(matchTokenId.group());
 
-            answer_token_id = tokenIdFound.remove( new Random().nextInt(tokenIdFound.size()));
+            answer_token_id = tokenIdFound.remove( random.nextInt(tokenIdFound.size()));
             answer_token = token.getToken4Id(answer_token_id);
             List<String> values4CategoryOfToken = new ArrayList<String>(token.getValues4CategoryOfToken(answer_token_id)); // TODO - do not copy ... just make random pick smarter
 
+            int max_queries_per_sentence = Settings.max_queries_per_sentence;
             if (0< max_queries_per_sentence && tokenIdFound.size() + 1 > max_queries_per_sentence) {
                 ArrayList<String> tokenIdFoundAndFix = new ArrayList<String>(tokenIdFound);
                 Collections.shuffle(tokenIdFoundAndFix, random);
-                for(String tokenId2repl : tokenIdFound.subList(0,max_queries_per_sentence)) {
-                    msg = msg.replaceAll( tokenId2repl, token.getToken4Id( tokenId2repl));
+                if (0 != (Settings.mode & Settings.MODE_TOKEN_FILL_ALL_SENTENCE)){
+                    for(String tokenId2repl : tokenIdFound.subList(0,max_queries_per_sentence)) {
+                        String token2repl = token.getToken4Id( tokenId2repl);
+                        if (0 == (Settings.mode & Settings.MODE_TOKEN_FILL_OTHER_TYPE_SENTENCE) || !values4CategoryOfToken.contains(token2repl) )
+                            msg = msg.replaceAll( tokenId2repl, token.getToken4Id( tokenId2repl));
+                    }
                 }
                 content.msg_querable_sentences.set(msg_query_id, msg);
             }

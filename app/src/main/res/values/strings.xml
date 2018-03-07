@@ -15,4 +15,8 @@
     <string name="opt_menu_data_refresh">refresh data</string>
     <string name="opt_menu_settings">settings ...</string>
     <string name="pref_token_across_pages">use answers from other pages</string>
+    <string name="pref_cat_generate_query">generate query</string>
+    <string name="pref_qry_fill_other_type">same type values blank</string>
+    <string name="pref_qry_fill_all">leave all values blank</string>
+    <string name="pref_qry_max_count_p_sentence">max queries from a sentence</string>
 </resources>

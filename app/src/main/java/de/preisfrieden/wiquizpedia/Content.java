@@ -21,12 +21,6 @@ public class Content {
     List<String> msg_querable_sentences = new ArrayList<String>();
     int msg_querable_sentences_total = 0;
 
-    private static int mode = 0;
-
-    public static final int MODE_FULL = 1;
-    public static final int MODE_ALLOW_FREE_INPUT = 2; // Query wiht only 1 avail answer
-    public static final int MODE_TOKEN_ACROSS_PAGES = 8; // Query wiht only 1 avail answer
-
     public static Tokens token = new Tokens();
     private DownloadCallback mCallback;
 
@@ -63,9 +57,6 @@ public class Content {
     }
 
 
-    public static void setMode(int mode) {
-        Content.mode = mode;
-    }
 
     // --------------------------------------------
 
@@ -81,7 +72,7 @@ public class Content {
     public String readContentData(String query)   {
         String prop = "";
         String urlStr = "https://de.wikipedia.org/w/api.php?action=query&prop=extracts&exintro=&explaintext=&redirects=&formatversion=2&format=json";
-        if ( 0 != (Content.mode & MODE_FULL)) urlStr = urlStr.replace("&exintro=&","&exsentences=50&");
+        if ( 0 != (Settings.mode & Settings.MODE_FULL)) urlStr = urlStr.replace("&exintro=&","&exsentences=50&");
         // urlStr = "https://de.wikipedia.org/w/api.php?action=query&exlimit=2&format=json&prop=extracts&explaintext=&formatversion=2&rvprop=content";
         // if ( 0 == (Content.mode & MODE_FULL)) urlStr += "&exintro=";
         // urlStr  = urlStr.replace("&prop=","&prop=revisions|"); // add wiki text
@@ -125,7 +116,7 @@ public class Content {
             msg_orig = msg;
             msg_wo_token = msg;
 
-            if (0 == (mode & MODE_TOKEN_ACROSS_PAGES)) token.clear();
+            if (0 == (Settings.mode & Settings.MODE_TOKEN_ACROSS_PAGES)) token.clear();
 
             title = parseTitle(msg);
             parseRef(msg);

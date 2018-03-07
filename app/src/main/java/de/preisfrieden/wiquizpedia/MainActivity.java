@@ -54,11 +54,7 @@ public class MainActivity extends AppCompatActivity implements DownloadCallback 
 
     public static final String EXTRA_MESSAGE = "com.example.myfirstapp.MESSAGE";
 
-    public static final int MODE_FULL = Content.MODE_FULL;
-    public static final int MODE_ALLOW_FREE_INPUT = Content.MODE_ALLOW_FREE_INPUT; // Query wiht only 1 avail answer
-    public static final int MODE_AUTO_NEXT = 4;
-    public static final int MODE_TOKEN_ACROSS_PAGES = Content.MODE_TOKEN_ACROSS_PAGES;
-    private static int mode = MODE_AUTO_NEXT;
+
     private String picTitle;
 
 
@@ -66,17 +62,6 @@ public class MainActivity extends AppCompatActivity implements DownloadCallback 
         Toast.makeText(gui, text, toast_long ? Toast.LENGTH_LONG : Toast.LENGTH_SHORT).show();
     }
 
-    protected void setMode4Preferences(SharedPreferences sp, String name, boolean notNegated, int mode_bit) {
-        mode = notNegated == sp.getBoolean(name , 0 != (mode & mode_bit)) ? mode | mode_bit : mode & ~(mode_bit);
-    }
-
-    protected void readPreferences() {
-        SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
-        setMode4Preferences( sharedPref,"pref_auto_next", true,  MODE_AUTO_NEXT );
-        setMode4Preferences( sharedPref,"pref_only_extract", false,  MODE_FULL );
-        setMode4Preferences( sharedPref,"pref_allow_free_input", true,  MODE_ALLOW_FREE_INPUT );
-        setMode4Preferences( sharedPref,"pref_token_across_pages", true,  MODE_TOKEN_ACROSS_PAGES );
-    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -84,7 +69,7 @@ public class MainActivity extends AppCompatActivity implements DownloadCallback 
         setContentView(R.layout.activity_main);
         // setHasOptionsMenu(true); // http://www.programmierenlernenhq.de/tutorial-android-options-menu-in-action-bar/
         PreferenceManager.setDefaultValues(this, R.xml.preferences, false);
-        readPreferences();
+        Settings.readPreferences( this );
         gui = this;
         ((TextView) findViewById(R.id.tv_question)).setMovementMethod(new ScrollingMovementMethod());
         EditText urlEt = (EditText) findViewById(R.id.url_et);
@@ -138,8 +123,8 @@ public class MainActivity extends AppCompatActivity implements DownloadCallback 
 
         switch (requestCode) {
             case RESULT_SETTINGS:
-                readPreferences();
-                toast("got settings ... mode = " + mode,true);
+                Settings.readPreferences( this );
+                toast("got settings ... mode = " + Settings.mode,true);
                 break;
 
         }
@@ -313,7 +298,7 @@ public class MainActivity extends AppCompatActivity implements DownloadCallback 
 
     private boolean checkAnswer ( String text) {
         boolean correct = query.checkAnswer(text);
-        if ((mode & MODE_AUTO_NEXT)>0)  {
+        if ((Settings.mode & Settings.MODE_AUTO_NEXT)>0)  {
             Toast.makeText(this, "auto next ...", Toast.LENGTH_LONG);
             final Handler handler = new Handler();
             handler.postDelayed(new Runnable() {
@@ -361,10 +346,10 @@ public class MainActivity extends AppCompatActivity implements DownloadCallback 
         //String specialText = placeholder_text;
         String specialText = content.title;
         switch (text.toUpperCase()) {
-            case "FULL": mode ^= MODE_FULL ; content = new Content(); break;
-            case "FREE": mode ^= MODE_ALLOW_FREE_INPUT ; break;
-            case "HARD": mode ^= MODE_ALLOW_FREE_INPUT + MODE_FULL;  content = new Content(); break;
-            case "AUTO": mode ^= MODE_AUTO_NEXT; break;
+            case "FULL": Settings.mode ^= Settings.MODE_FULL ; content = new Content(); break;
+            case "FREE": Settings.mode ^= Settings.MODE_ALLOW_FREE_INPUT ; break;
+            case "HARD": Settings.mode ^= Settings.MODE_ALLOW_FREE_INPUT + Settings.MODE_FULL;  content = new Content(); break;
+            case "AUTO": Settings.mode ^= Settings.MODE_AUTO_NEXT; break;
             default:    specialInput = null;
         }
         if (null == specialInput ) {
@@ -379,7 +364,6 @@ public class MainActivity extends AppCompatActivity implements DownloadCallback 
             }
         }
         if (null!= specialInput && !specialInput.isEmpty()) {
-            Content.setMode( mode);
             Toast.makeText( context, "Enter special " + specialInput + ": " + text, Toast.LENGTH_LONG).show();
             view.setText(specialText);
         }

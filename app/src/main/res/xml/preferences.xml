@@ -19,6 +19,24 @@
             android:title="@string/pref_token_across_pages" />
 
     </PreferenceCategory>
+    <PreferenceCategory android:title="@string/pref_cat_generate_query">
+
+        <CheckBoxPreference
+            android:defaultValue="false"
+            android:key="pref_qry_fill_other_type"
+            android:title="@string/pref_qry_fill_other_type" />
+        <CheckBoxPreference
+            android:defaultValue="false"
+            android:key="pref_qry_fill_all"
+            android:title="@string/pref_qry_fill_all" />
+        <EditTextPreference
+            android:defaultValue="0"
+            android:inputType="number"
+            android:key="pref_qry_max_count_p_sentence"
+            android:selectAllOnFocus="true"
+            android:singleLine="true"
+            android:title="@string/pref_qry_max_count_p_sentence" />
+    </PreferenceCategory>
 
     <PreferenceCategory android:title="@string/pref_cat_gui_title">
         <CheckBoxPreference
