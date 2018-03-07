@@ -14,4 +14,5 @@
     <string name="pref_cat_gui_title">gui behaviour</string>
     <string name="opt_menu_data_refresh">refresh data</string>
     <string name="opt_menu_settings">settings ...</string>
+    <string name="pref_token_across_pages">use answers from other pages</string>
 </resources>

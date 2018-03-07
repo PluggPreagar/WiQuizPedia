@@ -57,6 +57,7 @@ public class MainActivity extends AppCompatActivity implements DownloadCallback 
     public static final int MODE_FULL = Content.MODE_FULL;
     public static final int MODE_ALLOW_FREE_INPUT = Content.MODE_ALLOW_FREE_INPUT; // Query wiht only 1 avail answer
     public static final int MODE_AUTO_NEXT = 4;
+    public static final int MODE_TOKEN_ACROSS_PAGES = Content.MODE_TOKEN_ACROSS_PAGES;
     private static int mode = MODE_AUTO_NEXT;
     private String picTitle;
 
@@ -74,6 +75,7 @@ public class MainActivity extends AppCompatActivity implements DownloadCallback 
         setMode4Preferences( sharedPref,"pref_auto_next", true,  MODE_AUTO_NEXT );
         setMode4Preferences( sharedPref,"pref_only_extract", false,  MODE_FULL );
         setMode4Preferences( sharedPref,"pref_allow_free_input", true,  MODE_ALLOW_FREE_INPUT );
+        setMode4Preferences( sharedPref,"pref_token_across_pages", true,  MODE_TOKEN_ACROSS_PAGES );
     }
 
     @Override
@@ -118,8 +120,11 @@ public class MainActivity extends AppCompatActivity implements DownloadCallback 
 
             case R.id.opt_menu_data_refresh:
             case R.id.opt_menu_settings:
-                Intent i = new Intent(this, SettingsActivity.class);
-                startActivityForResult(i, RESULT_SETTINGS);
+                //Intent i = new Intent(this, SettingsActivity.class);
+                //startActivityForResult(i, RESULT_SETTINGS);
+                getFragmentManager().beginTransaction()
+                        .replace(android.R.id.content, new SettingsFragment())
+                        .commit();
                 break;
 
         }

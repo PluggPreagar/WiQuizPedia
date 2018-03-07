@@ -25,6 +25,7 @@ public class Content {
 
     public static final int MODE_FULL = 1;
     public static final int MODE_ALLOW_FREE_INPUT = 2; // Query wiht only 1 avail answer
+    public static final int MODE_TOKEN_ACROSS_PAGES = 8; // Query wiht only 1 avail answer
 
     public static Tokens token = new Tokens();
     private DownloadCallback mCallback;
@@ -123,6 +124,8 @@ public class Content {
         if (null != msg_orig && !msg_orig.equals(msg)){
             msg_orig = msg;
             msg_wo_token = msg;
+
+            if (0 == (mode & MODE_TOKEN_ACROSS_PAGES)) token.clear();
 
             title = parseTitle(msg);
             parseRef(msg);

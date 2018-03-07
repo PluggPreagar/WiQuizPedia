@@ -5,14 +5,18 @@
 
     <PreferenceCategory android:title="@string/pref_cat_content_title">
         <CheckBoxPreference
+            android:defaultValue="true"
+            android:key="pref_only_extract"
+            android:title="@string/pref_only_extract" />
+        <CheckBoxPreference
             android:defaultValue="false"
             android:key="pref_allow_free_input"
             android:title="@string/pref_allow_free_input" />
 
         <CheckBoxPreference
-            android:defaultValue="true"
-            android:key="pref_only_extract"
-            android:title="@string/pref_only_extract" />
+            android:defaultValue="false"
+            android:key="pref_token_across_pages"
+            android:title="@string/pref_token_across_pages" />
 
     </PreferenceCategory>
 
