@@ -37,7 +37,7 @@ public class Settings {
         setMode4Preferences( sharedPref,"pref_qry_fill_other_type", false,  MODE_TOKEN_FILL_OTHER_TYPE_SENTENCE );
         setMode4Preferences( sharedPref,"pref_qry_fill_all", false,  MODE_TOKEN_FILL_ALL_SENTENCE );
 
-        max_queries_per_sentence = sharedPref.getInt("pref_qry_max_count_p_sentence", 0);
+        max_queries_per_sentence = Integer.valueOf(sharedPref.getString("pref_qry_max_count_p_sentence", "0"));
 
     }
 

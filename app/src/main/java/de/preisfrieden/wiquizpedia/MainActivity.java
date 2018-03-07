@@ -105,11 +105,11 @@ public class MainActivity extends AppCompatActivity implements DownloadCallback 
 
             case R.id.opt_menu_data_refresh:
             case R.id.opt_menu_settings:
-                //Intent i = new Intent(this, SettingsActivity.class);
-                //startActivityForResult(i, RESULT_SETTINGS);
-                getFragmentManager().beginTransaction()
+                Intent i = new Intent(this, SettingsActivity.class);
+                startActivityForResult(i, RESULT_SETTINGS);
+                /*getFragmentManager().beginTransaction()
                         .replace(android.R.id.content, new SettingsFragment())
-                        .commit();
+                        .commit();*/
                 break;
 
         }
