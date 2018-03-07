@@ -34,7 +34,8 @@ public class ContentQuery {
     public ContentQuery( List<String> msg_querable_sentences, Tokens token, Content content ) {
         this.content = content;
         if (!msg_querable_sentences.isEmpty()) {
-            msg_query_id = new Random().nextInt(msg_querable_sentences.size());
+            Random random = new Random(System.nanoTime());
+            msg_query_id = random.nextInt(msg_querable_sentences.size());
             msg = msg_querable_sentences.get(msg_query_id); // getRandom(msg_querable_sentences);
 
             List<String> tokenIdFound = new ArrayList<String>();
@@ -48,7 +49,7 @@ public class ContentQuery {
 
             if (0< max_queries_per_sentence && tokenIdFound.size() + 1 > max_queries_per_sentence) {
                 ArrayList<String> tokenIdFoundAndFix = new ArrayList<String>(tokenIdFound);
-                Collections.shuffle(tokenIdFoundAndFix,new Random(System.nanoTime()));
+                Collections.shuffle(tokenIdFoundAndFix, random);
                 for(String tokenId2repl : tokenIdFound.subList(0,max_queries_per_sentence)) {
                     msg = msg.replaceAll( tokenId2repl, token.getToken4Id( tokenId2repl));
                 }
@@ -70,6 +71,8 @@ public class ContentQuery {
                 while (values4CategoryOfToken.remove(answer_token_avail.get(answer_token_avail.size() - 1))); // might have item multiple times ...
                 if (!values4CategoryOfToken.isEmpty()) answer_token_avail.add(values4CategoryOfToken.remove(new Random().nextInt(values4CategoryOfToken.size())));
             }
+
+            Collections.shuffle(answer_token_avail, random);
 
         }
     }
