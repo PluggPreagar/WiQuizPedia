@@ -19,4 +19,5 @@
     <string name="pref_qry_fill_other_type">same type values blank</string>
     <string name="pref_qry_fill_all">leave all values blank</string>
     <string name="pref_qry_max_count_p_sentence">max queries from a sentence</string>
+    <string name="pref_token_noun_marker">token per noun marker</string>
 </resources>

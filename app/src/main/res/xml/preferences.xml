@@ -17,6 +17,10 @@
             android:defaultValue="false"
             android:key="pref_token_across_pages"
             android:title="@string/pref_token_across_pages" />
+        <CheckBoxPreference
+            android:defaultValue="false"
+            android:key="pref_token_noun_marker"
+            android:title="@string/pref_token_noun_marker" />
 
     </PreferenceCategory>
     <PreferenceCategory android:title="@string/pref_cat_generate_query">

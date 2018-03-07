@@ -85,6 +85,10 @@ public class Tokens {
         return get(getOrEmpty(token).get(CATEGORY_IDX));
     }
 
+    public List<String> emptyIfNull(List<String> values) {
+        return null == values ? emptyValueList : values ;
+    }
+
     public String getRef4CategoryOfToken(String token) {
         // return new ArrayList<String>(new HashSet<String>(get(getOrEmpty(token).get(CATEGORY_IDX))));  // uniq values ...
         return getOrEmpty(token).get(REF_IDX);

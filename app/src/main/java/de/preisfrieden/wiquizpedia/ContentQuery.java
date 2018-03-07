@@ -73,7 +73,7 @@ public class ContentQuery {
 
             answer_token_avail = new ArrayList<String>( Arrays.asList(answer_token));
             if ( values4CategoryOfToken.size() < 2 && answer_token_id.startsWith("__Date") ) { // if no further dates to select - just go with year ...
-                values4CategoryOfToken = new ArrayList<String>(token.getValues4CategoryOfToken("__Year1__"));
+                values4CategoryOfToken = new ArrayList<String>(token.emptyIfNull(token.getValues4CategoryOfToken("__Year1__")));
                 answer_token_avail.set(0,answer_token_avail.get(0).replaceAll("^.*([0-9]{4}).*$", "$1"));
             }
             while( answer_token_avail.size() < 3 && ! values4CategoryOfToken.isEmpty() ) {

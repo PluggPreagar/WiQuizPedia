@@ -115,8 +115,8 @@ public class MainActivity extends AppCompatActivity implements DownloadCallback 
         };
 
         TextView tv_question = (TextView) findViewById(R.id.tv_question);
-        tv_question.setMovementMethod(new ScrollingMovementMethod());
         tv_question.setOnTouchListener( swipeTouchListener);
+        //tv_question.setMovementMethod(new ScrollingMovementMethod());
 
         ImageView imageView = (ImageView) findViewById(R.id.imageView);
         imageView.setOnTouchListener( swipeTouchListener);
@@ -265,8 +265,10 @@ public class MainActivity extends AppCompatActivity implements DownloadCallback 
 
                 @Override
                 public void run() {
+                    //toast("setHeight ..." , false);
                     TextView textView = (TextView) findViewById(R.id.tv_question);
                     textView.setHeight( Math.max(5,textView.getLineCount()) * textView.getLineHeight());
+                    //toast("setHeight ... Done " , true);
                 }
             }, 2000);
 

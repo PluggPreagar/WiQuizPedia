@@ -40,14 +40,14 @@ public class Content {
             @Override
             public void updateFromDownload(Object result) {
                 String jsonRows = (String) result;
-                String imageUrl = "";
+                List<String> imageUrls = new ArrayList<String>();
                 if (null != jsonRows) {
-                    for (String row : jsonRows.split("\n")) { // TODO iterate through
-                        if (row.contains("\"url\":"))
-                            imageUrl = row.replaceAll("^.*\"url\":\"", "").replaceAll("\".*$", "");
+                    for (String row : jsonRows.split("\n|\\{|\\}")) { // TODO iterate through
+                        if (row.contains("\"url\":") && !row.toLowerCase().contains(".svg"))
+                            imageUrls.add( row.replaceAll("^.*\"url\":\\s*\"", "").replaceAll("\".*$", ""));
                     }
                     DownloadDrawable downloadTask = new DownloadDrawable(callback);
-                    downloadTask.execute(imageUrl);
+                    if (!imageUrls.isEmpty()) downloadTask.execute(imageUrls.get(new Random().nextInt( imageUrls.size())));
                 }
             }
         }
@@ -187,18 +187,20 @@ public class Content {
 
     protected String extractAndReplaceValues(String msg) {
         msg = extractAndReplaceTokenByPattern( msg,"Date", "(\\d{2}\\.)\\s*(Januar|Februar|März|April|Mai|Juni|Juli|August|September|Oktober|November|Dezember|\\d{2,4}\\.)\\s*(\\d{2,4})", -1);
-        msg = extractAndReplaceTokenByPattern( msg,"RangAdj", "\\b((?:zweit|dritt|viert|fünft|sechst|siebent|acht|neun|zehnt|elft|zwölft)(?:größte|kleinste|höchste))\\b", -1);
-        msg = extractAndReplaceTokenByPattern( msg,"RangNum", "\\b[0-9+]\\.\\b", -1);
-        msg = extractAndReplaceTokenByPattern( msg,"YearMon", "\\b([0-9]{4}/(?:[1-9]|1[012]))\\b", -1);
+        msg = extractAndReplaceTokenByPattern( msg,"DateYM", "\\b([0-9]{4}/(?:[1-9]|1[012]))\\b", -1);
         msg = extractAndReplaceTokenByPattern( msg,"Year", "\\b([0-9]{4})\\b", -1);
-        msg = extractAndReplaceTokenByPattern( msg,"BigNum", "\\b([0-9.]+)\\b", -1);
+        msg = extractAndReplaceTokenByPattern( msg,"RangAdj", "\\b((?:zweit|dritt|viert|fünft|sechst|siebent|acht|neun|zehnt|elft|zwölft)(?:größte|kleinste|höchste))\\b", -1);
+        msg = extractAndReplaceTokenByPattern( msg,"RangNum", "\\b[0-9]+\\.\\b", -1);
+        msg = extractAndReplaceTokenByPattern( msg,"BigNum", "\\b([0-9]+[.][0-9]+(?:,[0-9]+)?)\\b", -1);
         msg = extractAndReplaceTokenByPattern( msg,"Real", "\\b([0-9]+)\\b", -1);
         msg = extractAndReplaceTokenByPattern( msg,"Number", "\\b([0-9,]+)\\b", -1);
         msg = extractAndReplaceTokenByPattern( msg,"Ort", "\\b(in\\s+[A-Z][^,. ]+)\\b", 0.10);
         //msg = extractAndReplaceTokenByPattern( msg,"Subst", "\\b(der|die|das)(\\s+[A-Z][^,. ]+)\\b", 0.75);
-        msg = extractAndReplaceTokenByPattern( msg,"der", "\\b(der)(\\s+[A-Z][^,. ]+)\\b", 0.75);
-        msg = extractAndReplaceTokenByPattern( msg,"die", "\\b(die)(\\s+[A-Z][^,. ]+)\\b", 0.75);
-        msg = extractAndReplaceTokenByPattern( msg,"das", "\\b(das)(\\s+[A-Z][^,. ]+)\\b", 0.75);
+        if (0 != (Settings.mode & Settings.MODE_TOKEN_NOUN_MARKER)){
+            msg = extractAndReplaceTokenByPattern( msg,"der", "\\b(der)(\\s+[A-Z][^,. ]+)\\b", 0.75);
+            msg = extractAndReplaceTokenByPattern( msg,"die", "\\b(die)(\\s+[A-Z][^,. ]+)\\b", 0.75);
+            msg = extractAndReplaceTokenByPattern( msg,"das", "\\b(das)(\\s+[A-Z][^,. ]+)\\b", 0.75);
+        }
         // TODO remove groups wo option
         return msg;
     }
