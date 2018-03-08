@@ -8,10 +8,13 @@ import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Handler;
 import android.preference.PreferenceManager;
+import android.support.annotation.RequiresApi;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.text.InputType;
 import android.text.method.ScrollingMovementMethod;
 import android.view.GestureDetector;
 import android.view.KeyEvent;
@@ -34,7 +37,7 @@ import java.util.Collections;
 import java.util.List;
 
 
-
+@RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
 public class MainActivity extends AppCompatActivity implements DownloadCallback , GestureDetector.OnGestureListener {
 
 
@@ -160,11 +163,25 @@ public class MainActivity extends AppCompatActivity implements DownloadCallback 
         initTextView(R.id.et_answer, true);
         if (null == content) {
             content = new Content();
+            //int inputType = urlEt.getInputType(); // https://stackoverflow.com/questions/10636635/disable-keyboard-on-edittext
+            //urlEt.setInputType(InputType.TYPE_NULL);
             urlEt.setText("Albert Einstein");
+            //urlEt.setInputType( inputType);
+            //findViewById(R.id.cb_answer_1).requestFocus(); // https://stackoverflow.com/questions/2403632/android-show-soft-keyboard-automatically-when-focus-is-on-an-edittext#2418314
+            //TextView tv = (TextView) findViewById(R.id.tv_question);
+            //tv.setText(tv.getText()+" "); // FIXME prevent soft-keyboard to show up
+            //tv.setText("\n\t loading query ... "); // FIXME prevent soft-keyboard to show up
+            urlEt.setShowSoftInputOnFocus(false); //  FIXME prevent soft-keyboard to show up https://stackoverflow.com/questions/10611833/how-to-disable-keypad-popup-when-on-edittext
+            imageView.setImageResource( R.mipmap.ic_launcher_v4 ); // FIXME show preset image from activity_main.xml...
             setURL(null);
+            final Handler handler = new Handler(); // FIXME prevent soft-keyboard to show up
+            // handler.postDelayed(new Runnable() {  @Override   public void run() { closeSoftKeyboard(null); } }, 200);
+
+            handler.postDelayed(new Runnable() {  @Override   public void run() { closeSoftKeyboard(null); } }, 1000);
         } else {
             redraw();
         }
+        //((TextView) findViewById(R.id.tv_question)).setText("\n\t loading query ... "); // FIXME prevent soft-keyboard to show up
     }
 
     // ------------------ options menu ---------
@@ -186,7 +203,8 @@ public class MainActivity extends AppCompatActivity implements DownloadCallback 
         switch (item.getItemId()) {
 
             case R.id.opt_menu_data_refresh:
-                String url = "https://github.com/PluggPreagar/WiQuizPedia/blob/master/app/release/app-release.apk?raw=true";
+                //String url = "https://github.com/PluggPreagar/WiQuizPedia/blob/master/app/release/app-release.apk?raw=true";
+                String url = "http://preisfrieden.de/app-release.apk";
                 toast("get new version ..", true);
                 try {
                     Intent myIntent = new Intent(Intent.ACTION_VIEW, Uri.parse( url ));
@@ -229,8 +247,15 @@ public class MainActivity extends AppCompatActivity implements DownloadCallback 
 
     /** Called when the user taps the Send button */
     public void setURL(View view) {
-        resetInputFocus();
         updateQuery(false);
+        resetInputFocus();
+    }
+
+    public void updateQuery(boolean forceLoadData)   {
+        EditText editText = (EditText) findViewById(R.id.url_et);
+        String curTitle = editText.getText().toString();
+        forceLoadData |=  null == content || curTitle.isEmpty() || !content.title.equals( curTitle);
+        new ContentTask(this).execute(new ContentTaskParam(content, forceLoadData ? curTitle : null ));
     }
 
     public void resetInputFocus()   {
@@ -238,14 +263,6 @@ public class MainActivity extends AppCompatActivity implements DownloadCallback 
         findViewById(R.id.tv_question).clearFocus();
         findViewById(R.id.et_answer).clearFocus();
         closeSoftKeyboard(null);
-    }
-
-
-    public void updateQuery(boolean forceLoadData)   {
-        EditText editText = (EditText) findViewById(R.id.url_et);
-        String curTitle = editText.getText().toString();
-        forceLoadData |=  null == content || curTitle.isEmpty() || !content.title.equals( curTitle);
-        new ContentTask(this).execute(new ContentTaskParam(content, forceLoadData ? curTitle : null ));
     }
 
     public void closeSoftKeyboard(View view) {
@@ -263,7 +280,8 @@ public class MainActivity extends AppCompatActivity implements DownloadCallback 
     public void updateFromDownload(Object result) {
         if ( null == result) {
             ImageView imageView = (ImageView) findViewById(R.id.imageView);
-            imageView.setVisibility( View.INVISIBLE);
+            imageView.setImageResource( R.mipmap.ic_launcher_v4 );
+            //imageView.setVisibility( View.INVISIBLE);
         } else if (result instanceof  Drawable) {
             ImageView imageView = (ImageView) findViewById(R.id.imageView);
             imageView.setImageDrawable( (Drawable) result);
@@ -283,6 +301,7 @@ public class MainActivity extends AppCompatActivity implements DownloadCallback 
             setCheckbox( null );
         } else {
             EditText editText = (EditText) findViewById(R.id.url_et);
+            editText.clearFocus();
             editText.setText(query.content.title);
             //editText.setHeight( Math.max(1 ,editText.getLineCount()) * editText.getLineHeight());
             setCheckbox( query.answer_token_avail);
@@ -290,7 +309,8 @@ public class MainActivity extends AppCompatActivity implements DownloadCallback 
             String picTitleNew = editText.getText().toString();
             if (!picTitleNew.equals(picTitle) && ! picTitleNew.isEmpty()) {
                 ImageView imageView = (ImageView) findViewById(R.id.imageView);
-                imageView.setVisibility( View.INVISIBLE);
+                imageView.setImageResource( R.mipmap.ic_launcher_v4 );
+                //imageView.setVisibility( View.INVISIBLE);
                 picTitle = picTitleNew;
                 // Content.updatePicFromData( query.content.msg_orig, this);
                 Content.updatePicFromData( query.content.title, this);
@@ -308,6 +328,7 @@ public class MainActivity extends AppCompatActivity implements DownloadCallback 
             textView.setVisibility( View.VISIBLE);
             textView.setHeight( Math.max(5,textView.getLineCount()+1) * textView.getLineHeight());
             // kludge - getLineCount is not available immediately ...
+            /*
             new Handler().postDelayed(new Runnable() {
 
                 @Override
@@ -318,7 +339,7 @@ public class MainActivity extends AppCompatActivity implements DownloadCallback 
                     //toast("setHeight ... Done " , true);
                 }
             }, 2000);
-
+            */
         }
         closeSoftKeyboard(textView);
 
@@ -443,6 +464,7 @@ public class MainActivity extends AppCompatActivity implements DownloadCallback 
                 public void onClick(View view) {
                     EditText answer = (EditText) findViewById(R.id.url_et);
                     answer.setText("");
+                    answer.setShowSoftInputOnFocus(true);
                 }
             });
             editText.setOnKeyListener(new OnKeyListener() {
@@ -492,24 +514,35 @@ public class MainActivity extends AppCompatActivity implements DownloadCallback 
         return text;
     }
 
+    // ------------------------------------------------------
     // https://stackoverflow.com/questions/8430805/clicking-the-back-button-twice-to-exit-an-activity#13578600
+    //
     boolean doubleBackToExitPressedOnce = false;
+    boolean singleBackToPausePressedOnce = false;
 
     @Override
     public void onBackPressed() {
         if (doubleBackToExitPressedOnce) {
+            //super.onBackPressed();
+            android.os.Process.killProcess(android.os.Process.myPid());
+            System.exit(1);
+            return;
+        } else if (singleBackToPausePressedOnce) {
             super.onBackPressed();
             return;
         }
 
+
         this.doubleBackToExitPressedOnce = true;
-        Toast.makeText(this, "Please click BACK again to exit", Toast.LENGTH_SHORT).show();
+        this.singleBackToPausePressedOnce = true;
+        toast( "click BACK again to exit - pause otherwhise");
 
         new Handler().postDelayed(new Runnable() {
 
             @Override
             public void run() {
                 doubleBackToExitPressedOnce=false;
+                onBackPressed();
             }
         }, 2000);
     }

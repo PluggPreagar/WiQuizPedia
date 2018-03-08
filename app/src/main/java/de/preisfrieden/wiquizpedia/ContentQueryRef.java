@@ -19,7 +19,7 @@ public class ContentQueryRef extends ContentQuery {
     public ContentQueryRef(List<String> potentialTitles, Tokens token, Content content ) {
         this.content = content;
         this.msg_query_id = -1;
-        this.msg = "please insert new title or select below";
+        this.msg = (0 == content.msg_querable_sentences.size() ? "\tsorry no more queries found \n\n"  : "" ) + "\n \t please insert new title or select below";
         this.answer_token_id = "";
         this.answer_token = "";
         this.answer_token_avail.clear();

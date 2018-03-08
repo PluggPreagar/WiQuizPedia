@@ -274,17 +274,17 @@ public class Content {
         // add dummy years ...
 
         ArrayList<String> years = new ArrayList<String>(token.emptyIfNull(token.getTokens4Category("Year"))); // clone, as we will sort ..
-        if (!years.isEmpty() && years.size() < 5){
+        if (!years.isEmpty() && years.size() < 7){
             Collections.sort(years);
             try {
                 Integer minYear = Integer.valueOf(years.get(0));
                 Integer maxYear = Integer.valueOf(years.get(years.size()-1));
                 Integer diffYear = maxYear - minYear;
-                diffYear += 2017 + (int) (((double) 2017 - maxYear ) * 1.2) + 1;
+                diffYear += (int) (((double) 2017 - maxYear ) * 0.2) + 1;
                 Integer minminYear = minYear - diffYear ;
                 Integer maxmaxYear = maxYear + diffYear ;
                 int size = 0;
-                while (size<3) {
+                while (size<7) {
                     String year = String.valueOf(minminYear + random.nextInt( (int) (maxmaxYear-minminYear)));
                     size = token.getIdx(token.add(year, "Year"));
                 }
