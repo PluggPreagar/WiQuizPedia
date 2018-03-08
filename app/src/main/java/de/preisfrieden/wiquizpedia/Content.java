@@ -1,13 +1,21 @@
 package de.preisfrieden.wiquizpedia;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
+import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.concurrent.Semaphore;
 
 /**
  * Created by peter on 21.02.2018.
@@ -21,10 +29,12 @@ public class Content {
     List<String> msg_querable_sentences = new ArrayList<String>();
     int msg_querable_sentences_total = 0;
     List<ContentQuery> recentQuery = new ArrayList<ContentQuery>();
+    Map<String,String> potentialNextQueries = new HashMap<String,String>();
 
     public static Tokens token = new Tokens();
     private DownloadCallback mCallback;
     private static Random random = new Random(System.nanoTime());
+    private static Semaphore mutex = new Semaphore(1);
 
 
 
@@ -83,6 +93,7 @@ public class Content {
     }
 
     public String readContentData(String query)   {
+        String data = null;
         String prop = "";
         String urlStr = "https://de.wikipedia.org/w/api.php?action=query&prop=extracts&exintro=&explaintext=&redirects=&formatversion=2&format=json";
         if ( 0 != (Settings.mode & Settings.MODE_FULL)) urlStr = urlStr.replace("&exintro=&","&exsentences=50&");
@@ -104,9 +115,15 @@ public class Content {
         if (query.isEmpty()) {
             // https://stackoverflow.com/questions/33614492/wikipedia-api-get-random-pages
             // --> https://en.wikipedia.org/w/api.php?format=json&action=query&generator=random&grnnamespace=0&prop=revisions|images&rvprop=content&grnlimit=10
+            // --> plainstyle:
+            //
             urlStr += "&generator=random";
+            urlStr += "&grnlimit=20";
             prop = DownloadTask2.NOCACHE;
+            if (potentialNextQueries.size()<3) potentialNextQueries.clear(); // force to have more than 3
+            data = getQueryFromPotentialNextQueries();
         } else {
+            data = getQueryFromPotentialNextQueries(query);
             try {
                 urlStr += "&titles=" + URLEncoder.encode(query, "utf-8");
             } catch (UnsupportedEncodingException e) {
@@ -114,18 +131,67 @@ public class Content {
             }
         }
 
-        Download download = new Download();
-        String data = "";
-        do {
-            data = download.downloadUrl(urlStr, prop);
-            prop = DownloadTask2.NOCACHE;
-        } while (query.isEmpty() && parseTitle(data).contains(":")); // skipp "Diskussion:" "Benutzer:" ... wikipedia-pseudo sites
-
+        if (null == data) {
+            Download download = new Download();
+            try {
+                mutex.acquire();
+                do {
+                    data = download.downloadUrl(urlStr, prop);
+                    data = extractArticleAndRef(data);
+                    prop = DownloadTask2.NOCACHE;
+                }
+                while (query.isEmpty() && parseTitle(data).contains(":")); // skipp "Diskussion:" "Benutzer:" ... wikipedia-pseudo sites
+            } catch (InterruptedException e) {
+                Logger.getAnonymousLogger().fine("skipp parallel downloads ...");
+            } finally {
+                mutex.release();
+            }
+        }
         return data;
     }
 
+    protected String extractArticleAndRef( String data){
+        String title = null;
+        try {
+            JSONObject json = new JSONObject(data);
+            JSONObject jsQuery = json.getJSONObject("query");
+            JSONArray jsPages = jsQuery.getJSONArray("pages");
+            //potentialNextQueries.clear();
+            for (int i = 0; i < jsPages.length() ; i++) {
+                JSONObject jsPage = jsPages.getJSONObject(i);
+                title = jsPage.getString("title");
+                if (!title.contains(":")) {
+                    String extract = jsPage.getString("extract");
+                    potentialNextQueries.put(title, extract);
+                }
+            }
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        return getQueryFromPotentialNextQueries(title);
+    }
+
+    protected String getQueryFromPotentialNextQueries(String query){
+        String data = potentialNextQueries.get(query);
+        if (null != data){
+            String nextData = potentialNextQueries.remove(query);
+            data = "\"title\": \"" + query + "\","
+                    + "\"extract\": \"" + nextData + "\"";
+        }
+        return data;
+    }
+
+    protected String getQueryFromPotentialNextQueries(){
+        return getQueryFromPotentialNextQueries( potentialNextQueries.isEmpty() ? null : potentialNextQueries.keySet().iterator().next() );
+    }
+
+    protected List<String> getTitlesFromPotentialNextQueries(){
+        return new ArrayList<String>(potentialNextQueries.keySet());
+    }
+
+
     protected Content parse(String msg){
-        if (null != msg_orig && !msg_orig.equals(msg)){
+        if (null != msg_orig && !msg_orig.equals(msg) && null!=msg){
             msg_orig = msg;
             msg_wo_token = msg;
 
@@ -210,16 +276,19 @@ public class Content {
         ArrayList<String> years = new ArrayList<String>(token.emptyIfNull(token.getTokens4Category("Year"))); // clone, as we will sort ..
         if (!years.isEmpty() && years.size() < 5){
             Collections.sort(years);
-            Integer minYear = Integer.valueOf(years.get(0));
-            Integer maxYear = Integer.valueOf(years.get(years.size()-1));
-            if (minYear.equals(maxYear)) maxYear = (int) (( (double) maxYear + 10  ) * 1.05);
-            Integer diffYear = maxYear - minYear;
-            Integer minminYear = minYear - ((int)(diffYear *  0.2) + 1) ;
-            Integer maxmaxYear = maxYear + ((int)(diffYear *  0.2) + 1) ;
-            int size = 0;
-            while (size<3) {
-                String year = String.valueOf(minminYear + random.nextInt( (int) (maxmaxYear-minminYear)));
-                size = token.getIdx(token.add(year, "Year"));
+            try {
+                Integer minYear = Integer.valueOf(years.get(0));
+                Integer maxYear = Integer.valueOf(years.get(years.size()-1));
+                Integer diffYear = maxYear - minYear;
+                diffYear += 2017 + (int) (((double) 2017 - maxYear ) * 1.2) + 1;
+                Integer minminYear = minYear - diffYear ;
+                Integer maxmaxYear = maxYear + diffYear ;
+                int size = 0;
+                while (size<3) {
+                    String year = String.valueOf(minminYear + random.nextInt( (int) (maxmaxYear-minminYear)));
+                    size = token.getIdx(token.add(year, "Year"));
+                }
+            } catch (Exception e) {
             }
 
         }
@@ -259,13 +328,23 @@ public class Content {
         return query_sentences;
     }
 
+
+
     public ContentQuery createQuery(){
         ContentQuery query = null;
         if (null != msg_querable_sentences && !msg_querable_sentences.isEmpty()){
             if (recentQuery.size()>20) recentQuery = recentQuery.subList( recentQuery.size() - 10 , recentQuery.size());
             query = new ContentQuery(msg_querable_sentences,  token, this);
             if (null != query) recentQuery.add(query);
+        } else {
+            query = createQueryRef();
         }
+        return query;
+    }
+
+    public ContentQuery createQueryRef(){
+        ContentQuery query = null;
+        if (!potentialNextQueries.isEmpty())  query = new ContentQueryRef( new ArrayList<String>(potentialNextQueries.keySet()), token, this);
         return query;
     }
 

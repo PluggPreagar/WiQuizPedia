@@ -32,6 +32,9 @@ public class ContentQuery {
     static Random random = new Random(System.nanoTime());
 
 
+    protected ContentQuery() {
+    }
+
 
     public ContentQuery( List<String> msg_querable_sentences, Tokens token, Content content ) {
         this.content = content;
@@ -107,10 +110,11 @@ public class ContentQuery {
 
     public ContentQuery mergeWithNextSentence() {
         List<String> sentences = content.msg_querable_sentences;
-        if (sentences.size() > msg_query_id) {
-            msg += " " + sentences.get(msg_query_id + 1);
+        int msg_query_id_next = msg_query_id + 1 ;
+        if (sentences.size() > msg_query_id_next) {
+            msg += " " + sentences.get(msg_query_id_next);
             sentences.set(msg_query_id, msg);
-            sentences.remove(msg_query_id+1);
+            sentences.remove(msg_query_id_next);
         }
         return this;
     }

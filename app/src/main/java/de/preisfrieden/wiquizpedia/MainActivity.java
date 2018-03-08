@@ -49,6 +49,11 @@ public class MainActivity extends AppCompatActivity implements DownloadCallback 
     https://stackoverflow.com/questions/627594/is-there-a-wikipedia-api
 
 
+
+    TODO - use wiki-style - extract refs ...
+    TODO - use ref to offer alternatives to go one ...
+
+
      */
 
     private static Activity gui = null;
@@ -69,6 +74,9 @@ public class MainActivity extends AppCompatActivity implements DownloadCallback 
         Toast.makeText(gui, text, toast_long ? Toast.LENGTH_LONG : Toast.LENGTH_SHORT).show();
     }
 
+    public static void toast(String text){
+        toast(text, false);
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -83,45 +91,55 @@ public class MainActivity extends AppCompatActivity implements DownloadCallback 
 
         swipeTouchListener = new OnSwipeTouchListener(MainActivity.this) {
             public void onSwipeTop() {
-                MainActivity.toast("merge with next sentence",false);
+                MainActivity.toast("merge with next sentence");
                 updateFromDownload( query.mergeWithNextSentence());
             }
 
             public void onSwipeRight() {
-                Toast.makeText(getApplicationContext(), ("last query"), Toast.LENGTH_SHORT).show();
+                MainActivity.toast( ("last query"));
                 updateFromDownload( content.getLastQuery());
             }
 
             public void onSwipeLeft() {
-                Toast.makeText(getApplicationContext(), ("next query"), Toast.LENGTH_SHORT).show();
+                MainActivity.toast( ("next query"));
                 setURL(null);
             }
 
             public void onSwipeBottom() {
-                MainActivity.toast("random page",false);
+                MainActivity.toast("random page");
                 ImageView imageView = (ImageView) findViewById(R.id.imageView);
                 imageView.setVisibility( View.INVISIBLE);
+
                 ((EditText) findViewById(R.id.url_et)).setText("");
                 setURL(null);
             }
 
             @Override
             public boolean onSingleTapUp2() {
-                MainActivity.toast("Tap", false);
+                MainActivity.toast("Tap");
+                /*
                 TextView textView = (TextView) findViewById(R.id.tv_question);
                 MainActivity.toast("Tap: " + textView.getLineCount() + "*" + textView.getLineHeight() , false);
                 textView.setHeight( textView.getHeight() + textView.getLineHeight());
+                */
                 return true;
             }
 
             @Override
             public void onLongPress2() {
-
+                MainActivity.toast("longPress ... list random pages");
+                ContentQuery queryRef = content.createQueryRef();
+                if (null != queryRef) {
+                    updateFromDownload(queryRef);
+                } else {
+                    ((EditText) findViewById(R.id.url_et)).setText("");
+                    setURL(null);
+                }
             }
 
             @Override
             public boolean onDoubleTap2() {
-                Toast.makeText(getApplicationContext(), ("open external"), Toast.LENGTH_SHORT).show();
+                MainActivity.toast("open external");
                 callUrl4Content();
                 return true;
             }
@@ -168,7 +186,7 @@ public class MainActivity extends AppCompatActivity implements DownloadCallback 
         switch (item.getItemId()) {
 
             case R.id.opt_menu_data_refresh:
-                String url = "https://github.com/PluggPreagar/WiQuizPedia/blob/master/app/build/outputs/apk/debug/app-debug.apk?raw=true";
+                String url = "https://github.com/PluggPreagar/WiQuizPedia/blob/master/app/release/app-release.apk?raw=true";
                 toast("get new version ..", true);
                 try {
                     Intent myIntent = new Intent(Intent.ACTION_VIEW, Uri.parse( url ));
@@ -271,11 +289,15 @@ public class MainActivity extends AppCompatActivity implements DownloadCallback 
             initTextView(R.id.et_answer, false);
             String picTitleNew = editText.getText().toString();
             if (!picTitleNew.equals(picTitle) && ! picTitleNew.isEmpty()) {
+                ImageView imageView = (ImageView) findViewById(R.id.imageView);
+                imageView.setVisibility( View.INVISIBLE);
                 picTitle = picTitleNew;
                 // Content.updatePicFromData( query.content.msg_orig, this);
                 Content.updatePicFromData( query.content.title, this);
             }
-            if (!query.answer_token_id.isEmpty())  msg = query.msg.replaceAll( query.answer_token_id , "____").replaceAll( "__[a-zA-Z0-9]+__" , " ... ");
+            msg = query.msg;
+            if (!query.answer_token_id.isEmpty())  msg = msg.replaceAll( query.answer_token_id , "____");
+            msg = msg.replaceAll( "__[a-zA-Z0-9]+__" , " ... ");
             setButton();
         }
 
@@ -321,6 +343,7 @@ public class MainActivity extends AppCompatActivity implements DownloadCallback 
                 new CompoundButton.OnCheckedChangeListener() {
                    @Override
                    public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+
                        buttonView.setBackgroundColor(!isChecked ? Color.TRANSPARENT : checkAnswer(isChecked ? buttonView.getText().toString() : "") == isChecked ? Color.GREEN : Color.RED );
                        setButton();
                    }
@@ -385,8 +408,19 @@ public class MainActivity extends AppCompatActivity implements DownloadCallback 
 
     private boolean checkAnswer ( String text) {
         boolean correct = query.checkAnswer(text);
-        if ((Settings.mode & Settings.MODE_AUTO_NEXT)>0)  {
-            Toast.makeText(this, "auto next ...", Toast.LENGTH_LONG);
+        if (query instanceof ContentQueryRef) {
+            toast( "next title ... ");
+            EditText et_url = (EditText) findViewById(R.id.url_et);
+            et_url.setText(text);
+            final Handler handler = new Handler();
+            handler.postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    setURL(null);
+                }
+            }, 1000);
+        } else if ((Settings.mode & Settings.MODE_AUTO_NEXT)>0)  {
+            toast( "auto next query ...", true);
             final Handler handler = new Handler();
             handler.postDelayed(new Runnable() {
                 @Override

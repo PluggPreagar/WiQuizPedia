@@ -25,9 +25,10 @@ public class Tokens {
     private static final int REF_IDX = 1;
     private static final int CATEGORY_IDX = 2;
 
-    private ValueList emptyValueList = createEmptyValueList();
+    private ValueList emptyValueListWithElems = createEmptyValueListWithElems();
+    private ValueList emptyValueList = new ValueList();
 
-    private static ValueList createEmptyValueList(){
+    private static ValueList createEmptyValueListWithElems(){
         ValueList valueList = new ValueList();
         valueList.addAll( Arrays.asList("", "","") );
         return valueList;
@@ -39,7 +40,7 @@ public class Tokens {
 
     private ValueList getOrEmpty(String key) {
         ValueList valueList = get(key);
-        return null == valueList ? emptyValueList: valueList ;
+        return null == valueList ? emptyValueListWithElems: valueList ;
     }
 
     private void put( String key, ValueList list){

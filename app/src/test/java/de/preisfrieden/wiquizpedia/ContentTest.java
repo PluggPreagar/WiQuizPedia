@@ -281,4 +281,18 @@ public class ContentTest extends Content {
         assertEquals( normaliseContent, normCont);
 
     }
+
+    //
+    //
+    // Read Category ---
+    //      https://de.wikipedia.org/wiki/Spezial:ApiSandbox#action=query&format=json&list=categorymembers&generator=links&cmtitle=Kategorie%3ANobelpreistr%C3%A4ger_f%C3%BCr_Physik
+    //              cmlimit=max
+    //      https://stackoverflow.com/questions/21497323/list-all-wikipedia-articles-in-one-category-and-subcategories
+    //
+
+    //  read random pages ... incl content + images
+    //
+    //      https://en.wikipedia.org/w/api.php?format=json&action=query&generator=random&grnnamespace=0&prop=revisions|images&rvprop=content&grnlimit=10
+    //
+
 }
