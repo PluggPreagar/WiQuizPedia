@@ -1,6 +1,6 @@
 <resources>
     <string name="app_name">WiQuizPedia</string>
-    <string name="url_et_message">Enter URL</string>
+    <string name="tv_title_message">Albert Einstein</string>
     <string name="button">Button</string>
     <string name="textview_message">load question ...</string>
     <string name="et_answer_message">direct answer ...</string>
@@ -20,4 +20,14 @@
     <string name="pref_qry_fill_all">leave all values blank</string>
     <string name="pref_qry_max_count_p_sentence">max queries from a sentence</string>
     <string name="pref_token_noun_marker">token per noun marker</string>
+    <string name="hlp_tv">Help: \n\t - einfach Wunsch-Titel (Wikipedia Seiten-Name) eingeben
+        \n ... und los geht es ...
+\n folgende Funktionen werden derzeit unterstützt:
+\n - swipe oben nach unten - zufälligen Artikel laden
+\n -  long press - zeige 3 zufällige Artikel ...
+\n - swipe nach rechts/links - nächste / vorherige frage
+\n und ...
+\n - swipe nach oben - nächsten Satz mit in Query aufnehmen (falls Satz-Trennnung nicht richtig erkannt wurde. ..)
+ </string>
+    <string name="opt_menu_show_help">show help</string>
 </resources>

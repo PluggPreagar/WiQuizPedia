@@ -8,6 +8,9 @@
         app:showAsAction="never" />
 
     <item
+        android:id="@+id/opt_menu_show_help"
+        android:title="@string/opt_menu_show_help" />
+    <item
         android:id="@+id/opt_menu_data_refresh"
         android:title="@string/opt_menu_data_refresh"
         app:showAsAction="never" />

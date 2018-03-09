@@ -10,6 +10,7 @@ import android.os.AsyncTask;
 public class ContentTask extends AsyncTask<ContentTaskParam, Void, ContentQuery> {
 
     private Content content = null;
+    private static boolean running = false;
 
     private static DownloadCallback<ContentQuery> mCallback;
 
@@ -23,11 +24,17 @@ public class ContentTask extends AsyncTask<ContentTaskParam, Void, ContentQuery>
     @Override
     protected ContentQuery doInBackground(ContentTaskParam... contentTaskParams) {
         ContentQuery contentQuery = null;
-        if (null != contentTaskParams && contentTaskParams.length > 0 || null != contentTaskParams[0]) {
-            ContentTaskParam contentTask = contentTaskParams[0];
-            String title = contentTask.getNewTitle();
-            content = contentTask.getContent();
-            contentQuery = null != title ? content.parseUrl( title ) : content.createQuery() ; // cont. on updateFromDownload-Callback
+        if (!running && (  null != contentTaskParams && (contentTaskParams.length > 0 || null != contentTaskParams[0]))) {
+            try {
+                running = true;
+                ContentTaskParam contentTask = contentTaskParams[0];
+                String title = contentTask.getNewTitle();
+                content = contentTask.getContent();
+                if (null == content) content = new Content();
+                contentQuery = null != title ? content.parseUrl(title) : content.createQuery(); // cont. on updateFromDownload-Callback
+            } finally {
+                running = false;
+            }
         }
         return contentQuery;
     }

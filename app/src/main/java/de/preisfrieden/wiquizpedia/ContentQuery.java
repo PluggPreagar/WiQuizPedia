@@ -29,6 +29,9 @@ public class ContentQuery {
     String answer_token_id = "";
     String answer_token = "";
     List<String> answer_token_avail = new ArrayList<String>();
+
+    String title = ""; // allow to remeber title independend from current title in content ..
+
     static Random random = new Random(System.nanoTime());
 
 
@@ -38,6 +41,7 @@ public class ContentQuery {
 
     public ContentQuery( List<String> msg_querable_sentences, Tokens token, Content content ) {
         this.content = content;
+        this.title = content.title;
         if (!msg_querable_sentences.isEmpty()) {
 
             msg_query_id = random.nextInt(msg_querable_sentences.size());

@@ -152,21 +152,23 @@ public class Content {
 
     protected String extractArticleAndRef( String data){
         String title = null;
-        try {
-            JSONObject json = new JSONObject(data);
-            JSONObject jsQuery = json.getJSONObject("query");
-            JSONArray jsPages = jsQuery.getJSONArray("pages");
-            //potentialNextQueries.clear();
-            for (int i = 0; i < jsPages.length() ; i++) {
-                JSONObject jsPage = jsPages.getJSONObject(i);
-                title = jsPage.getString("title");
-                if (!title.contains(":")) {
-                    String extract = jsPage.getString("extract");
-                    potentialNextQueries.put(title, extract);
+        if (null != data) {
+            try {
+                JSONObject json = new JSONObject(data);
+                JSONObject jsQuery = json.getJSONObject("query");
+                JSONArray jsPages = jsQuery.getJSONArray("pages");
+                //potentialNextQueries.clear();
+                for (int i = 0; i < jsPages.length(); i++) {
+                    JSONObject jsPage = jsPages.getJSONObject(i);
+                    title = jsPage.getString("title");
+                    if (!title.contains(":")) {
+                        String extract = jsPage.getString("extract");
+                        potentialNextQueries.put(title, extract);
+                    }
                 }
+            } catch (JSONException e) {
+                e.printStackTrace();
             }
-        } catch (JSONException e) {
-            e.printStackTrace();
         }
         return getQueryFromPotentialNextQueries(title);
     }
