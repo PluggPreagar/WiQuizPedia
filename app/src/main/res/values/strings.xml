@@ -30,4 +30,5 @@
 \n - swipe nach oben - nächsten Satz mit in Query aufnehmen (falls Satz-Trennnung nicht richtig erkannt wurde. ..)
  </string>
     <string name="opt_menu_show_help">show help</string>
+    <string name="pref_qry_almost_correct">exact answer only</string>
 </resources>

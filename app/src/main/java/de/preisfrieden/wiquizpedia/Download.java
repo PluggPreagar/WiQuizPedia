@@ -20,6 +20,10 @@ public class Download {
     public static String NOCACHE = "NOCACHE";
     private static Map<String,String> cache = new HashMap<String,String>();
 
+    public static void inject (String url, String data) {
+        cache.put(url, data);
+    }
+
     public String downloadUrl(String... urls) {
         String result = null;
         if ( urls != null && urls.length > 0) {

@@ -12,7 +12,7 @@ public class ContentTask extends AsyncTask<ContentTaskParam, Void, ContentQuery>
     private Content content = null;
     private static boolean running = false;
 
-    private static DownloadCallback<ContentQuery> mCallback;
+    private  DownloadCallback<ContentQuery> mCallback;
 
     ContentTask(DownloadCallback<ContentQuery> callback) {
         setCallback(callback);
@@ -41,8 +41,8 @@ public class ContentTask extends AsyncTask<ContentTaskParam, Void, ContentQuery>
 
     // http://www.vogella.com/tutorials/AndroidBackgroundProcessing/article.html#asynctask
     @Override
-    protected void onPostExecute(ContentQuery contentQuery) {
-        if (null != contentQuery) mCallback.updateFromDownload( contentQuery); // get query or wait for download ---
+    protected void onPostExecute(ContentQuery contentQuery) { // allow mCallback zu be null for preloading ...
+        if (null != contentQuery && null != mCallback ) mCallback.updateFromDownload( contentQuery); // get query or wait for download ---
     }
 
 

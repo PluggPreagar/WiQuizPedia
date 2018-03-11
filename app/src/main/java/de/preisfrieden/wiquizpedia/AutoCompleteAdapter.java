@@ -20,10 +20,11 @@ public class AutoCompleteAdapter extends ArrayAdapter<String> {
 
     public AutoCompleteAdapter(@NonNull Context context, int resource) {
         super(context, resource, suggestions );
-        suggestions.add("Jim Morrison");
-        suggestions.add("Albert Einstein");
     }
 
+    public void add (String token) {
+        if (!suggestions.contains(token)) suggestions.add(token);
+    }
 
 
 }

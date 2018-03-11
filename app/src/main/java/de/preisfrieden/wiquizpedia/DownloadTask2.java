@@ -21,7 +21,6 @@ public class DownloadTask2 extends AsyncTask<String, Void, String> {
 
     public static String NOCACHE = "NOCACHE";
 
-    private static Map<String,String> cache = new HashMap<String,String>();
     private DownloadCallback<String> mCallback;
 
     DownloadTask2(DownloadCallback<String> callback) {

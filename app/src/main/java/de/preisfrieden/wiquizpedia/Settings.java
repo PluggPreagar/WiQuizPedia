@@ -19,6 +19,7 @@ public class Settings {
     public static final int MODE_TOKEN_FILL_OTHER_TYPE_SENTENCE = 16 ;
     public static final int MODE_TOKEN_FILL_ALL_SENTENCE = 32;
     public static final int MODE_TOKEN_NOUN_MARKER = 64;
+    public static final int MODE_TOKEN_ALMOST_CORRECT =128;
 
     public static int mode = MODE_AUTO_NEXT;
 
@@ -39,6 +40,8 @@ public class Settings {
         setMode4Preferences( sharedPref,"pref_qry_fill_other_type", false,  MODE_TOKEN_FILL_OTHER_TYPE_SENTENCE );
         setMode4Preferences( sharedPref,"pref_qry_fill_all", false,  MODE_TOKEN_FILL_ALL_SENTENCE );
         setMode4Preferences( sharedPref,"pref_token_noun_marker", true,  MODE_TOKEN_NOUN_MARKER );
+
+        setMode4Preferences( sharedPref,"pref_qry_almost_correct", false,  MODE_TOKEN_ALMOST_CORRECT );
 
         max_queries_per_sentence = Integer.valueOf(sharedPref.getString("pref_qry_max_count_p_sentence", "0"));
 

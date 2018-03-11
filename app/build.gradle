@@ -1,6 +1,13 @@
 apply plugin: 'com.android.application'
 
 android {
+    signingConfigs {
+        ReleaseKey_WiQuizPedia {
+            keyAlias 'ReleaseKey_WiQuizPedia'
+            keyPassword 'WX[Fc.gDe+?0'
+            storeFile file('D:/_projekte/data/keystore_android.jks')
+        }
+    }
     compileSdkVersion 26
     defaultConfig {
         applicationId "de.preisfrieden.wiquizpedia"
@@ -14,12 +21,16 @@ android {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            signingConfig signingConfigs.ReleaseKey_WiQuizPedia
+        }
+        debug {
+            signingConfig signingConfigs.ReleaseKey_WiQuizPedia
         }
     }
 }
 
 dependencies {
-    implementation fileTree(dir: 'libs', include: ['*.jar'])
+    implementation fileTree(include: ['*.jar'], dir: 'libs')
     implementation 'com.android.support:appcompat-v7:26.1.0'
     implementation 'com.android.support.constraint:constraint-layout:1.0.2'
     testImplementation 'junit:junit:4.12'

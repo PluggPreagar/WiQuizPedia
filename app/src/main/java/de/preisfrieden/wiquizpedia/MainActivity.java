@@ -58,6 +58,9 @@ public class MainActivity extends AppCompatActivity implements DownloadCallback 
     TODO - autocomplete - http://easyautocomplete.com/example/duckduckgo-ajax-api ,,,
                 http://api.duckduckgo.com/?q=jim+morris&format=json
 
+    TODO - Chat
+    TODO - Cache file ..
+                https://developer.android.com/training/data-storage/files.html#WriteExternalStorage
 
      */
 
@@ -71,9 +74,12 @@ public class MainActivity extends AppCompatActivity implements DownloadCallback 
     public static final String EXTRA_MESSAGE = "com.example.myfirstapp.MESSAGE";
 
     private String picTitle;
-    private boolean initHelp2Shop = true;
+    private static boolean firstRun = true;
 
     OnSwipeTouchListener swipeTouchListener;
+    private String initTitle = "Albert Einstein";
+    private String initContent = "{\"batchcomplete\":true,\"query\":{\"normalized\":[{\"fromencoded\":false,\"from\":\"Albert_Einstein\",\"to\":\"Albert Einstein\"}],\"pages\":[{\"pageid\":1278360,\"ns\":0,\"title\":\"Albert Einstein\",\"extract\":\"Albert Einstein (* 14. März 1879 in Ulm, Württemberg, Deutsches Reich; † 18. April 1955 in Princeton, New Jersey, Vereinigte Staaten) gilt als einer der bedeutendsten theoretischen Physiker der Wissenschaftsgeschichte. Seine Forschungen zur Struktur von Materie, Raum und Zeit sowie zum Wesen der Gravitation veränderten maßgeblich das zuvor geltende newtonsche Weltbild.\\nEinsteins Hauptwerk, die Relativitätstheorie, machte ihn weltberühmt. Im Jahr 1905 erschien seine Arbeit mit dem Titel Zur Elektrodynamik bewegter Körper, deren Inhalt heute als spezielle Relativitätstheorie bezeichnet wird. 1915 publizierte er die allgemeine Relativitätstheorie. Auch zur Quantenphysik leistete er wesentliche Beiträge. „Für seine Verdienste um die theoretische Physik, besonders für seine Entdeckung des Gesetzes des photoelektrischen Effekts“, erhielt er den Nobelpreis des Jahres 1921, der ihm 1922 überreicht wurde. Seine theoretischen Arbeiten spielten – im Gegensatz zur verbreiteten Meinung – beim Bau der Atombombe und der Entwicklung der Kernenergie nur eine indirekte Rolle.Albert Einstein gilt als Inbegriff des Forschers und Genies. Er nutzte seine außerordentliche Bekanntheit auch außerhalb der naturwissenschaftlichen Fachwelt bei seinem Einsatz für Völkerverständigung und Frieden. In diesem Zusammenhang verstand er sich selbst als Pazifist, Sozialist und Zionist.\\nIm Laufe seines Lebens war Einstein Staatsbürger mehrerer Länder: Durch Geburt besaß er die württembergische Staatsbürgerschaft. Von 1896 bis 1901 staatenlos, ab 1901 bis zu seinem Tode Staatsbürger der Schweiz, war er 1911/12 in Österreich-Ungarn auch Bürger Österreichs. Von 1914 bis 1932 lebte Einstein in Berlin und war als Bürger Preußens erneut Staatsangehöriger im Deutschen Reich. Mit der Machtergreifung Hitlers gab er 1933 den deutschen Pass endgültig ab und wurde 1934 vom Deutschen Reich strafausgebürgert. Zusätzlich zu seinem seit 1901 geltenden Schweizer Bürgerrecht erwarb er 1940 noch die amerikanische Staatsbürgerschaft.\"}]}}";
+
 
     // https://proandroiddev.com/building-an-autocompleting-edittext-using-rxjava-f69c5c3f5a40
     // Using RxRelay's implementation of publish subject - https://github.com/JakeWharton/RxRelay
@@ -115,10 +121,9 @@ public class MainActivity extends AppCompatActivity implements DownloadCallback 
 
             public void onSwipeBottom() {
                 MainActivity.toast("random page");
-                ImageView imageView = (ImageView) findViewById(R.id.imageView);
-                imageView.setVisibility( View.INVISIBLE);
-
                 setTitleText( "");
+                query = null;
+                redraw();
             }
 
             @Override
@@ -140,6 +145,8 @@ public class MainActivity extends AppCompatActivity implements DownloadCallback 
                     updateFromDownload(queryRef);
                 } else {
                     setTitleText( "");
+                    query = null;
+                    redraw();
                 }
             }
 
@@ -153,24 +160,30 @@ public class MainActivity extends AppCompatActivity implements DownloadCallback 
 
         View view = findViewById(R.id.entire_view);
         view.setOnTouchListener( swipeTouchListener);
-
-        AutoCompleteTextView tv_title = setTitleText( null);
         this.getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN); // https://turbomanage.wordpress.com/2012/05/02/show-soft-keyboard-automatically-when-edittext-receives-focus/
-        // tv_title will get focus right from start - so prevent soft-keyboard to show up the hard way ...
-        tv_title.setAdapter( new AutoCompleteAdapter( this, android.R.layout.simple_expandable_list_item_1));
-        //tv_title.setAdapter(  new ArrayAdapter<String>(this,android.R.layout.simple_list_item_1, Arrays.asList("Jim Knopf","Jim Hanson","Jim Morris","Jimnasium")) );
 
         initCheckbox();
-        setTextView(R.id.et_answer, null);
+        setTextView( null );
+        setImageView( null );
 
-        if (initHelp2Shop) {
-            initHelp2Shop = false;
+        if (firstRun) {
+            firstRun = false;
             showHelp();
             toast("tap to close ... ");
+            Download.inject( Content.getUrl(initTitle),initContent);
+            // preload randoms..
+            // new ContentTask(null).execute(new ContentTaskParam(content, ""));
+            new Handler().postDelayed(new Runnable() {
+
+                @Override
+                public void run() {
+                    new ContentTask(null).execute(new ContentTaskParam(content, ""));
+                }
+            }, 2000);
         }
 
         redraw(); // always redraw - even before loaded ...
-        if (null == content) setTitleText("Albert Einstein"); // init but do not change content when screen is just turned ...
+        if (null == content) setTitleText(null); // init but do not change content when screen is just turned ...
     }
     // ------------------------------------------------------------------------------
 
@@ -184,14 +197,8 @@ public class MainActivity extends AppCompatActivity implements DownloadCallback 
 
     @Override
     public void updateFromDownload(Object result) {
-        if ( null == result) {
-            ImageView imageView = (ImageView) findViewById(R.id.imageView);
-            imageView.setImageResource( R.mipmap.ic_launcher_v4 );
-            //imageView.setVisibility( View.INVISIBLE);
-        } else if (result instanceof  Drawable) {
-            ImageView imageView = (ImageView) findViewById(R.id.imageView);
-            imageView.setImageDrawable( (Drawable) result);
-            imageView.setVisibility( View.VISIBLE);
+        if ( null == result || result instanceof  Drawable) {
+            setImageView( (Drawable) result);
         } else if (result instanceof  ContentQuery){
             query = (ContentQuery) result;
             content = (null == query) ? null : query.content;
@@ -205,15 +212,16 @@ public class MainActivity extends AppCompatActivity implements DownloadCallback 
 
         AutoCompleteTextView titleText = setTitleText(query.title, false);
         String picTitleNew = titleText.getText().toString();
+        picTitleNew = picTitleNew.replaceAll(ContentQueryRef.loadingTitle,"");
         if (!picTitleNew.equals(picTitle) && ! picTitleNew.isEmpty()) {
             picTitle = picTitleNew;
-            updateFromDownload(null);
+            setImageView( (Drawable) null);
             if (!query.title.isEmpty()) Content.updatePicFromData( query.title, this);
         }
 
         msg = query.msg;
         if (null != msg ) {
-            if (!query.answer_token_id.isEmpty())  msg = msg.replaceAll( query.answer_token_id , "____");
+            if (!query.answer_token_id.isEmpty()) msg = msg.replaceAll( query.answer_token_id , "____");
             msg = msg.replaceAll( "__[a-zA-Z0-9]+__" , " ... ");
             TextView textView = (TextView) findViewById(R.id.tv_question);
             textView.setText( msg );
@@ -221,6 +229,7 @@ public class MainActivity extends AppCompatActivity implements DownloadCallback 
         }
         setButton( query);
         setCheckbox( query.answer_token_avail);
+        setTextView( query.answer_token);
 
     }
 
@@ -269,21 +278,20 @@ public class MainActivity extends AppCompatActivity implements DownloadCallback 
         */
 
         checkBox.setVisibility( null == answer ? View.INVISIBLE : View.VISIBLE );
-        if (null != answer) checkBox.setText(answer);
-        checkBox.setTextColor(Color.BLACK);
-        checkBox.setChecked(false);
-        checkBox.setBackgroundColor(Color.TRANSPARENT);
+        if (null != answer) {
+            checkBox.setText(answer);
+            checkBox.setTextColor(Color.BLACK);
+            checkBox.setChecked(false);
+            checkBox.setBackgroundColor(Color.TRANSPARENT);
+        }
     }
 
-    private void setTextView(int textViewId, String initNullOrValue ){
+    private void setTextView( String initNullOrValue ){
         final String placeholder_text = "direct answer ...";
-        final TextView tv_answer = (TextView) findViewById( textViewId);
-
-        tv_answer.setTextColor(Color.BLACK);
-        tv_answer.setBackgroundColor(Color.TRANSPARENT);
-        tv_answer.setText(placeholder_text);
+        final TextView tv_answer = (TextView) findViewById( R.id.et_answer);
 
         if (null == initNullOrValue) {
+            tv_answer.setVisibility( View.INVISIBLE);
             tv_answer.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
@@ -300,25 +308,47 @@ public class MainActivity extends AppCompatActivity implements DownloadCallback 
                     return false;
                 }
             });
+        } else if (initNullOrValue.isEmpty()) {
+            tv_answer.setVisibility( View.INVISIBLE); // hide for ContentQueryRef ....
+        } else {
+            tv_answer.setVisibility( View.VISIBLE);
+            tv_answer.setTextColor(Color.BLACK);
+            tv_answer.setBackgroundColor(Color.TRANSPARENT);
+            tv_answer.setText(placeholder_text);
+        }
+    }
+
+    protected void setImageView( Drawable drawable){
+        ImageView imageView = (ImageView) findViewById(R.id.imageView);
+        if (null == drawable) {
+            imageView.setImageResource( R.mipmap.ic_launcher_v4 );
+        } else {
+            imageView.setImageDrawable( (Drawable) drawable);
         }
     }
 
     private boolean checkAnswer ( String text) {
-        boolean nextRef = query instanceof ContentQueryRef;
+        boolean result = true;
         if ( query instanceof ContentQueryRef) {
             toast( "next title ... ");
             setTitleText(text);
         } else if ((Settings.mode & Settings.MODE_AUTO_NEXT)>0){
-            toast("auto next query ...", true);
-            final Handler handler = new Handler();
-            handler.postDelayed(new Runnable() {
+            result = query.checkAnswer(text);
+            if (query.content.msg_querable_sentences.isEmpty()) {
+                TextView tv_title = (TextView) findViewById(R.id.tv_title);
+                tv_title.setBackgroundColor( Color.GREEN );
+                toast("Well DONE !!!", true);
+            } else {
+                toast("auto next ...", false);
+            }
+            new Handler().postDelayed(new Runnable() {
                 @Override
                 public void run() {
                     processTvTitle(null);
                 }
             }, 1000);
         }
-        return query.checkAnswer(text);
+        return result;
     }
 
     private AutoCompleteTextView setTitleText( String nullOrTitle) {
@@ -328,27 +358,31 @@ public class MainActivity extends AppCompatActivity implements DownloadCallback 
     private AutoCompleteTextView setTitleText( String nullOrTitle, boolean runProcess){
         final AutoCompleteTextView tv_title = (AutoCompleteTextView) findViewById( R.id.tv_title);
         if (null == nullOrTitle) {
+            nullOrTitle = initTitle;
             tv_title.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
                     setTitleText("", false);
+                    tv_title.setDropDownHeight( WindowManager.LayoutParams.WRAP_CONTENT );
                 }
             });
             tv_title.setOnKeyListener(new OnKeyListener() {
                 public boolean onKey(View v, int keyCode, KeyEvent event) {
                     if (event.getAction() == KeyEvent.ACTION_DOWN && keyCode == KeyEvent.KEYCODE_ENTER) {
+                        tv_title.setDropDownHeight( 0 );
                         if ( null != handleSpecialCommand(tv_title, MainActivity.this)) processTvTitle(tv_title);
                         return true;
                     }
                     return false;
                 }
             });
-        } else { // https://stackoverflow.com/questions/5495225/how-to-disable-autocompletetextviews-drop-down-from-showing-up#7320542
+            // tv_title will get focus right from start - so prevent soft-keyboard to show up the hard way ...
+            tv_title.setAdapter( new AutoCompleteAdapter( this, android.R.layout.simple_expandable_list_item_1));
             tv_title.setDropDownHeight( 0 );
-            tv_title.setText( nullOrTitle );
-            tv_title.setDropDownHeight( WindowManager.LayoutParams.WRAP_CONTENT );
-            if (runProcess) processTvTitle( tv_title);
         }
+        tv_title.setBackgroundColor( Color.TRANSPARENT );
+        tv_title.setText( nullOrTitle );
+        if (runProcess) processTvTitle( tv_title);
         return tv_title;
     }
 
@@ -481,7 +515,6 @@ public class MainActivity extends AppCompatActivity implements DownloadCallback 
         }
 
     }
-
 
     // -------------------------------------------------------
     //

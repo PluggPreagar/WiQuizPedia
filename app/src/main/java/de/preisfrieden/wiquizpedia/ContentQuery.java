@@ -97,19 +97,20 @@ public class ContentQuery {
 
     public boolean checkAnswer(String answer) {
         boolean correct = answer_token.toLowerCase().equals(answer.toLowerCase());
-        boolean correctAlmost = answer_token.toLowerCase().endsWith(answer.toLowerCase());
+        boolean correctAlmost = false;
+        if (0<(Settings.mode & Settings.MODE_TOKEN_ALMOST_CORRECT) && !correct) correctAlmost = answer_token.toLowerCase().endsWith(answer.toLowerCase()) || answer_token.toLowerCase().startsWith(answer.toLowerCase());
         if ((correct || correctAlmost)&& first_try) {
             msg = content.msg_querable_sentences.get(msg_query_id).replace(answer_token_id, answer_token);
             if (msg.contains("__")) {
                 content.msg_querable_sentences.set(msg_query_id, msg);
-                if (!correct && correctAlmost) MainActivity.toast( "answer is "+ (!correct && correctAlmost ? "more or less " : "") + "right", false);
+                if (correctAlmost) MainActivity.toast( "answer is "+ (correctAlmost ? "more or less " : "") + "right" + (correctAlmost ? ": " + answer_token : ""), false);
             } else {
                 content.msg_querable_sentences.remove(msg_query_id);
-                MainActivity.toast( "query is "+ (!correct && correctAlmost ? "more or less " : "") + "solved", true );
+                MainActivity.toast( "query is "+ (!correct && correctAlmost ? "more or less " : "") + "solved"+ (correctAlmost ? ": " + answer_token : ""), false );
             }
         }
         first_try = false;
-        return correctAlmost;
+        return correct || correctAlmost;
     }
 
     public ContentQuery mergeWithNextSentence() {

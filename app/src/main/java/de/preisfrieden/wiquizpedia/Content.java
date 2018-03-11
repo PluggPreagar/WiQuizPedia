@@ -1,12 +1,16 @@
 package de.preisfrieden.wiquizpedia;
 
+import android.icu.text.Replaceable;
+
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.Serializable;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -29,14 +33,42 @@ public class Content {
     List<String> msg_querable_sentences = new ArrayList<String>();
     int msg_querable_sentences_total = 0;
     List<ContentQuery> recentQuery = new ArrayList<ContentQuery>();
-    Map<String,String> potentialNextQueries = new HashMap<String,String>();
+    static Map<String,String> potentialNextQueries = new HashMap<String,String>();
 
     public static Tokens token = new Tokens();
     private DownloadCallback mCallback;
     private static Random random = new Random(System.nanoTime());
     private static Semaphore mutex = new Semaphore(1);
 
+    static class ReplacePattern {
+        String id;
+        Pattern pattern;
+        double percent2keep;
+        ReplacePattern(String id , String pattern,double percent2keep) {
+            this.id = id;
+            this.pattern = Pattern.compile("(.*?)" + pattern, Pattern.MULTILINE + Pattern.DOTALL);
+            this.percent2keep = percent2keep;
+        }
+    }
 
+    static ReplacePattern[] replacePatterns = {
+        new ReplacePattern( "Date", "(\\d{2}\\.)\\s*(Januar|Februar|März|April|Mai|Juni|Juli|August|September|Oktober|November|Dezember|\\d{2,4}\\.)\\s*(\\d{2,4})", -1)
+        ,new ReplacePattern( "DateYM", "\\b([0-9]{4}/(?:[1-9]|1[012]))\\b", -1)
+        ,new ReplacePattern( "Year", "\\b([0-9]{4})\\b", -1)
+        ,new ReplacePattern("RangAdj", "\\b((?:zweit|dritt|viert|fünft|sechst|siebent|acht|neun|zehnt|elft|zwölft)(?:größte|kleinste|höchste))\\b", -1)
+        ,new ReplacePattern("RangNum", "\\b[0-9]+\\.\\b", -1)
+        ,new ReplacePattern("BigNum", "\\b([0-9]+[.][0-9]+(?:,[0-9]+)?)\\b", -1)
+        ,new ReplacePattern("Real", "\\b([0-9]+)\\b", -1)
+        ,new ReplacePattern("Number", "\\b([0-9,]+)\\b", -1)
+        ,new ReplacePattern("Ort", "\\b(in\\s+[A-Z][^,. ]+)\\b", 0.10)
+    }
+    ;
+
+    static ReplacePattern[] replacePatternsNoun = {
+            new ReplacePattern("der", "\\b(der)(\\s+[A-Z][^,. ]+)\\b", 0.75)
+            ,new ReplacePattern("die", "\\b(die)(\\s+[A-Z][^,. ]+)\\b", 0.75)
+            ,new ReplacePattern("das", "\\b(das)(\\s+[A-Z][^,. ]+)\\b", 0.75)
+        };
 
     static public void updatePicFromData(String data, DownloadCallback callback) {
         // http://wikimedia.7.x6.nabble.com/What-is-the-Full-URL-of-the-images-returned-by-a-wikipedia-query-td1147620.html
@@ -92,11 +124,26 @@ public class Content {
         return createQuery();
     }
 
+    public static String getUrl(String query) {
+        String urlStr = "https://de.wikipedia.org/w/api.php?action=query&prop=extracts&exintro=&explaintext=&redirects=&formatversion=2&format=json";
+        if ( 0 != (Settings.mode & Settings.MODE_FULL)) urlStr = urlStr.replace("&exintro=&","&exsentences=50&");
+        if (query.isEmpty()) {
+            urlStr += "&generator=random";
+            urlStr += "&grnlimit=20";
+        } else {
+            try {
+                urlStr += "&titles=" + URLEncoder.encode(query, "utf-8");
+            } catch (UnsupportedEncodingException e) {
+                e.printStackTrace();
+            }
+        }
+        return urlStr;
+    }
+
     public String readContentData(String query)   {
         String data = null;
         String prop = "";
-        String urlStr = "https://de.wikipedia.org/w/api.php?action=query&prop=extracts&exintro=&explaintext=&redirects=&formatversion=2&format=json";
-        if ( 0 != (Settings.mode & Settings.MODE_FULL)) urlStr = urlStr.replace("&exintro=&","&exsentences=50&");
+        String urlStr = getUrl( query);
         // urlStr = "https://de.wikipedia.org/w/api.php?action=query&exlimit=2&format=json&prop=extracts&explaintext=&formatversion=2&rvprop=content";
         // if ( 0 == (Content.mode & MODE_FULL)) urlStr += "&exintro=";
         // urlStr  = urlStr.replace("&prop=","&prop=revisions|"); // add wiki text
@@ -117,18 +164,11 @@ public class Content {
             // --> https://en.wikipedia.org/w/api.php?format=json&action=query&generator=random&grnnamespace=0&prop=revisions|images&rvprop=content&grnlimit=10
             // --> plainstyle:
             //
-            urlStr += "&generator=random";
-            urlStr += "&grnlimit=20";
             prop = DownloadTask2.NOCACHE;
             if (potentialNextQueries.size()<3) potentialNextQueries.clear(); // force to have more than 3
             data = getQueryFromPotentialNextQueries();
         } else {
             data = getQueryFromPotentialNextQueries(query);
-            try {
-                urlStr += "&titles=" + URLEncoder.encode(query, "utf-8");
-            } catch (UnsupportedEncodingException e) {
-                e.printStackTrace();
-            }
         }
 
         if (null == data) {
@@ -257,9 +297,23 @@ public class Content {
     }
 
     protected String extractAndReplaceValues(String msg) {
+
+        for (int i = 0; i < replacePatterns.length ; i++) {
+            msg = extractAndReplaceTokenByPattern( msg, replacePatterns[i].id, replacePatterns[i].pattern, replacePatterns[i].percent2keep);
+        }
+
+        if (0 != (Settings.mode & Settings.MODE_TOKEN_NOUN_MARKER)){
+            for (int i = 0; i < replacePatternsNoun.length ; i++) {
+                msg = extractAndReplaceTokenByPattern( msg, replacePatternsNoun[i].id, replacePatternsNoun[i].pattern, replacePatternsNoun[i].percent2keep);
+            }
+        }
+
+        /*
         msg = extractAndReplaceTokenByPattern( msg,"Date", "(\\d{2}\\.)\\s*(Januar|Februar|März|April|Mai|Juni|Juli|August|September|Oktober|November|Dezember|\\d{2,4}\\.)\\s*(\\d{2,4})", -1);
         msg = extractAndReplaceTokenByPattern( msg,"DateYM", "\\b([0-9]{4}/(?:[1-9]|1[012]))\\b", -1);
         msg = extractAndReplaceTokenByPattern( msg,"Year", "\\b([0-9]{4})\\b", -1);
+        */
+        /*
         msg = extractAndReplaceTokenByPattern( msg,"RangAdj", "\\b((?:zweit|dritt|viert|fünft|sechst|siebent|acht|neun|zehnt|elft|zwölft)(?:größte|kleinste|höchste))\\b", -1);
         msg = extractAndReplaceTokenByPattern( msg,"RangNum", "\\b[0-9]+\\.\\b", -1);
         msg = extractAndReplaceTokenByPattern( msg,"BigNum", "\\b([0-9]+[.][0-9]+(?:,[0-9]+)?)\\b", -1);
@@ -272,7 +326,7 @@ public class Content {
             msg = extractAndReplaceTokenByPattern( msg,"die", "\\b(die)(\\s+[A-Z][^,. ]+)\\b", 0.75);
             msg = extractAndReplaceTokenByPattern( msg,"das", "\\b(das)(\\s+[A-Z][^,. ]+)\\b", 0.75);
         }
-
+        */
         // add dummy years ...
 
         ArrayList<String> years = new ArrayList<String>(token.emptyIfNull(token.getTokens4Category("Year"))); // clone, as we will sort ..
@@ -301,9 +355,14 @@ public class Content {
     }
 
     protected String extractAndReplaceTokenByPattern(String msg, String categoryOrId, String pattern, double percent2keep ) {
+        Pattern p = Pattern.compile("(.*?)" + pattern, Pattern.MULTILINE + Pattern.DOTALL);
+        return  extractAndReplaceTokenByPattern( msg,  categoryOrId,  p,  percent2keep );
+    }
+
+
+    protected String extractAndReplaceTokenByPattern(String msg, String categoryOrId, Pattern p, double percent2keep ) {
         String matched = "";
         int matchLen = 0;
-        Pattern p = Pattern.compile("(.*?)" + pattern, Pattern.MULTILINE + Pattern.DOTALL);
         Matcher m = p.matcher(msg);
         while (m.find()) {
             String value = "";

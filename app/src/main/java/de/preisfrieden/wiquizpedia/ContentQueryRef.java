@@ -16,15 +16,19 @@ import java.util.regex.Pattern;
 
 public class ContentQueryRef extends ContentQuery {
 
+    public static String loadingTitle = "  L o a d i n g . .  ";
+
     public ContentQueryRef(List<String> potentialTitles, Content content ) {
         this(potentialTitles, null, content);
     }
 
     public ContentQueryRef(List<String> potentialTitles, Tokens token, Content content ) {
         this.content = content;
-        this.title = null == content ? "" : content.title;
+        this.title = null == potentialTitles ? loadingTitle : null == content ? "" : content.title;
         this.msg_query_id = -1;
-        this.msg = (null == content || 0 == content.msg_querable_sentences.size() ? " \tsorry no (more) queries found \n"  : "" ) + "\n \t please insert new title \n\t\t or select from below";
+        this.msg = null == potentialTitles ? "\n \t\t loading ... "
+                        : ((null == content || 0 == content.msg_querable_sentences.size() ? " \tsorry no (more) queries found \n"  : "" )
+                                    + "\n \t\t\t please insert new title \n\n \t\t\t\t or select from below");
         this.answer_token_id = "";
         this.answer_token = "";
         this.answer_token_avail.clear();
