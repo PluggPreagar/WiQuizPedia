@@ -14,6 +14,7 @@ import android.preference.PreferenceManager;
 import android.support.annotation.RequiresApi;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.GestureDetector;
 import android.view.KeyEvent;
 import android.view.Menu;
@@ -96,6 +97,10 @@ public class MainActivity extends AppCompatActivity implements DownloadCallback 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        // https://www.intertech.com/Blog/android-handling-the-unexpected/
+        // https://stackoverflow.com/questions/601503/how-do-i-obtain-crash-data-from-my-android-application#2855736
+        CustomExceptionHandler.register(this);
 
         setContentView(R.layout.activity_main);
         // setHasOptionsMenu(true); // http://www.programmierenlernenhq.de/tutorial-android-options-menu-in-action-bar/
