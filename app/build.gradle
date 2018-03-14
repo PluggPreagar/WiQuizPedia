@@ -6,6 +6,7 @@ android {
             keyAlias 'ReleaseKey_WiQuizPedia'
             keyPassword 'WX[Fc.gDe+?0'
             storeFile file('D:/_projekte/data/keystore_android.jks')
+            storePassword 'Y^OqFT@v[cfR'
         }
     }
     compileSdkVersion 26

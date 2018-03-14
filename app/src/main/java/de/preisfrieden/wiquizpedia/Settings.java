@@ -20,9 +20,9 @@ public class Settings {
     public static final int MODE_TOKEN_FILL_ALL_SENTENCE = 32;
     public static final int MODE_TOKEN_NOUN_MARKER = 64;
     public static final int MODE_TOKEN_ALMOST_CORRECT =128;
+    public static final int ERR_UPLOAD_ERR = 256;
 
     public static int mode = MODE_AUTO_NEXT;
-
     public static int max_queries_per_sentence = 0;
     private String picTitle;
 
@@ -42,6 +42,8 @@ public class Settings {
         setMode4Preferences( sharedPref,"pref_token_noun_marker", true,  MODE_TOKEN_NOUN_MARKER );
 
         setMode4Preferences( sharedPref,"pref_qry_almost_correct", false,  MODE_TOKEN_ALMOST_CORRECT );
+
+        setMode4Preferences( sharedPref,"pref_err_upload_err", true,  ERR_UPLOAD_ERR );
 
         max_queries_per_sentence = Integer.valueOf(sharedPref.getString("pref_qry_max_count_p_sentence", "0"));
 

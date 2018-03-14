@@ -279,7 +279,7 @@ public class Content {
         }
         msg = msg.replaceAll("\\\\n", "\n");
         msg = msg.replaceAll("(\\d{2}\\.)\\s+(Januar|Februar|März|April|Mai|Juni|Juli|August|September|Oktober|November|Dezember)\\s*(\\d{2,4})", "$1$2$3"); // 14. März 1879 -> 14.März.1879 sep Date from End of Sentencte
-        msg = msg.replaceAll("(?<!\\d)\\.\\s", ".\n");
+        msg = msg.replaceAll("(?<!\\d)\\.\\s*", ".\n");
         return msg;
     }
 

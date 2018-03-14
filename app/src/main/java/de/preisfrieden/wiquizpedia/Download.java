@@ -5,7 +5,9 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.io.UnsupportedEncodingException;
+import java.net.HttpURLConnection;
 import java.net.URL;
+import java.net.URLConnection;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -46,24 +48,16 @@ public class Download {
 
     private String downloadUrl(URL url) throws IOException {
         InputStream stream = null;
-        HttpsURLConnection connection = null;
+        HttpURLConnection connection = null;
         String result = null;
         try {
-            connection = (HttpsURLConnection) url.openConnection();
-            // Timeout for reading InputStream arbitrarily set to 3000ms.
+            connection = (HttpURLConnection ) url.openConnection();
             connection.setReadTimeout(3000);
-            // Timeout for connection.connect() arbitrarily set to 3000ms.
             connection.setConnectTimeout(3000);
-            // For this use case, set HTTP method to GET.
             connection.setRequestMethod("GET");
-            // Already true by default but setting just in case; needs to be true since this request
-            // is carrying an input (response) body.
             connection.setDoInput(true);
-            // Open communications link (network traffic occurs here).
-            // http://www.evanjbrunner.info/posts/json-requests-with-httpurlconnection-in-android/
             connection.setRequestProperty("Content-Type", "application/json;charset=utf-8");
             connection.connect();
-            //publishProgress(DownloadCallback.Progress.CONNECT_SUCCESS);
             int responseCode = connection.getResponseCode();
             if (responseCode != HttpsURLConnection.HTTP_OK) {
                 throw new IOException("HTTP error code: " + responseCode);

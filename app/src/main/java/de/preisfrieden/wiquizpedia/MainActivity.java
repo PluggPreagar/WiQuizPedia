@@ -32,6 +32,9 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -74,17 +77,24 @@ public class MainActivity extends AppCompatActivity implements DownloadCallback 
     GestureDetector gestureDetector;
     public static final String EXTRA_MESSAGE = "com.example.myfirstapp.MESSAGE";
 
-    private String picTitle;
+    private static String picTitle;
+    private static String curTitle;
     private static boolean firstRun = true;
 
     OnSwipeTouchListener swipeTouchListener;
     private String initTitle = "Albert Einstein";
     private String initContent = "{\"batchcomplete\":true,\"query\":{\"normalized\":[{\"fromencoded\":false,\"from\":\"Albert_Einstein\",\"to\":\"Albert Einstein\"}],\"pages\":[{\"pageid\":1278360,\"ns\":0,\"title\":\"Albert Einstein\",\"extract\":\"Albert Einstein (* 14. März 1879 in Ulm, Württemberg, Deutsches Reich; † 18. April 1955 in Princeton, New Jersey, Vereinigte Staaten) gilt als einer der bedeutendsten theoretischen Physiker der Wissenschaftsgeschichte. Seine Forschungen zur Struktur von Materie, Raum und Zeit sowie zum Wesen der Gravitation veränderten maßgeblich das zuvor geltende newtonsche Weltbild.\\nEinsteins Hauptwerk, die Relativitätstheorie, machte ihn weltberühmt. Im Jahr 1905 erschien seine Arbeit mit dem Titel Zur Elektrodynamik bewegter Körper, deren Inhalt heute als spezielle Relativitätstheorie bezeichnet wird. 1915 publizierte er die allgemeine Relativitätstheorie. Auch zur Quantenphysik leistete er wesentliche Beiträge. „Für seine Verdienste um die theoretische Physik, besonders für seine Entdeckung des Gesetzes des photoelektrischen Effekts“, erhielt er den Nobelpreis des Jahres 1921, der ihm 1922 überreicht wurde. Seine theoretischen Arbeiten spielten – im Gegensatz zur verbreiteten Meinung – beim Bau der Atombombe und der Entwicklung der Kernenergie nur eine indirekte Rolle.Albert Einstein gilt als Inbegriff des Forschers und Genies. Er nutzte seine außerordentliche Bekanntheit auch außerhalb der naturwissenschaftlichen Fachwelt bei seinem Einsatz für Völkerverständigung und Frieden. In diesem Zusammenhang verstand er sich selbst als Pazifist, Sozialist und Zionist.\\nIm Laufe seines Lebens war Einstein Staatsbürger mehrerer Länder: Durch Geburt besaß er die württembergische Staatsbürgerschaft. Von 1896 bis 1901 staatenlos, ab 1901 bis zu seinem Tode Staatsbürger der Schweiz, war er 1911/12 in Österreich-Ungarn auch Bürger Österreichs. Von 1914 bis 1932 lebte Einstein in Berlin und war als Bürger Preußens erneut Staatsangehöriger im Deutschen Reich. Mit der Machtergreifung Hitlers gab er 1933 den deutschen Pass endgültig ab und wurde 1934 vom Deutschen Reich strafausgebürgert. Zusätzlich zu seinem seit 1901 geltenden Schweizer Bürgerrecht erwarb er 1940 noch die amerikanische Staatsbürgerschaft.\"}]}}";
 
+    public static String getErrorInfo () {
+        //(EditText) MainActivity.findViewById(R.id.tv_title);
+        return (null == query ? "" : query.title)
+                + " -- " + (null == content || null == content.recentQuery ? "" : content.recentQuery.size())
+                + " -- " + (null == curTitle ? "-" : curTitle);
+    }
+
 
     // https://proandroiddev.com/building-an-autocompleting-edittext-using-rxjava-f69c5c3f5a40
     // Using RxRelay's implementation of publish subject - https://github.com/JakeWharton/RxRelay
-
 
     public static void toast(String text, boolean toast_long ){
         Toast.makeText(gui, text, toast_long ? Toast.LENGTH_LONG : Toast.LENGTH_SHORT).show();
@@ -356,6 +366,7 @@ public class MainActivity extends AppCompatActivity implements DownloadCallback 
         return result;
     }
 
+
     private AutoCompleteTextView setTitleText( String nullOrTitle) {
         return setTitleText(nullOrTitle, true);
     }
@@ -386,9 +397,17 @@ public class MainActivity extends AppCompatActivity implements DownloadCallback 
             tv_title.setDropDownHeight( 0 );
         }
         tv_title.setBackgroundColor( Color.TRANSPARENT );
-        tv_title.setText( nullOrTitle );
+        if (null!= nullOrTitle) {
+            tv_title.setText( nullOrTitle );
+            curTitle = nullOrTitle;
+        }
+        tv_title.clearFocus();
         if (runProcess) processTvTitle( tv_title);
         return tv_title;
+    }
+
+    public void onClick(View view){
+        processTvTitle((AutoCompleteTextView) findViewById( R.id.tv_title));
     }
 
     public String handleSpecialCommand(TextView view, AppCompatActivity context) {
@@ -479,9 +498,33 @@ public class MainActivity extends AppCompatActivity implements DownloadCallback 
                 showHelp();
                 break;
 
+            case R.id.opt_menu_send_comment:
+                showComment();
+                break;
+
+
+            case R.id.opt_menu_err_show:
+                Intent intent = new Intent(Intent.ACTION_VIEW);
+                File file = new File( CustomExceptionHandler.localPath, "error.txt");
+                if (file.exists()) {
+                    try {
+                        String trace = new Download().readStream(new FileInputStream(file), 5000);
+                        showErrorTrace(trace + "\n\n\n\t\t\t(click to close)\n\n");
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                    /*
+                    Uri uri = Uri.parse("content://com.sample.provider/" + file.getAbsolutePath());
+                    //Here com.sample.provider is the authority defined in the manifest.
+                    intent.setDataAndType(uri, "text/plain");
+                    startActivity(intent);
+                    */
+                }
+                break;
+
             case R.id.opt_menu_data_refresh:
                 //String url = "https://github.com/PluggPreagar/WiQuizPedia/blob/master/app/release/app-release.apk?raw=true";
-                String url = "http://preisfrieden.de/app-release.apk";
+                String url = "http://preisfrieden.de/WiQuizPedia/app-release.apk";
                 toast("get new version ..", true);
                 try {
                     Intent myIntent = new Intent(Intent.ACTION_VIEW, Uri.parse( url ));
@@ -542,6 +585,86 @@ public class MainActivity extends AppCompatActivity implements DownloadCallback 
             }
         });
         dialog.show();
+    }
+
+    public void showErrorTrace(String txt){
+
+        final Dialog dialog = new Dialog(this);
+        dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
+        ColorDrawable drawable = new ColorDrawable(Color.WHITE);
+        drawable.setAlpha(200);
+        dialog.getWindow().setBackgroundDrawable(drawable);
+        dialog.setContentView(R.layout.error_trace_page);
+        dialog.setCanceledOnTouchOutside(true);
+        //for dismissing anywhere you touch
+        TextView tv = (TextView) dialog.findViewById(R.id.tv_error_trace);
+        tv.setText(txt);
+        tv.setOnClickListener(new View.OnClickListener() {
+
+            @Override
+            public void onClick(View view) {
+                dialog.dismiss();
+            }
+        });
+        dialog.show();
+    }
+
+    public void showComment(){
+
+        final Dialog dialog = new Dialog(this);
+        dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
+        ColorDrawable drawable = new ColorDrawable(Color.WHITE);
+        drawable.setAlpha(200);
+        dialog.getWindow().setBackgroundDrawable(drawable);
+        dialog.setContentView(R.layout.comment_page);
+        dialog.setCanceledOnTouchOutside(true);
+        //for dismissing anywhere you touch
+        final TextView tv_comment = (TextView) dialog.findViewById(R.id.et_comment_page);
+        tv_comment.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    setTitleText("", false);
+                }
+            });
+        tv_comment.setOnKeyListener(new OnKeyListener() {
+                public boolean onKey(View v, int keyCode, KeyEvent event) {
+                    if (event.getAction() == KeyEvent.ACTION_DOWN && keyCode == KeyEvent.KEYCODE_ENTER) {
+                        sendComment(v);
+                        dialog.dismiss();
+                        return true;
+                    }
+                    return false;
+                }
+            });
+
+        class CommentDownloader implements DownloadCallback {
+
+            CommentDownloader() {
+                DownloadTask2 downloadTask = new DownloadTask2( this );
+                downloadTask.execute("http://preisfrieden.de/WiQuizPedia/recentComment.php", DownloadTask2.NOCACHE);
+            }
+
+            @Override
+            public void updateFromDownload(Object result) {
+                if (null != result && result instanceof String) {
+                    TextView tv_comment_rcv = (TextView) dialog.findViewById(R.id.tv_comment_rcv);
+                    tv_comment_rcv.setText( (String) result);
+                }
+            }
+        }
+
+        new CommentDownloader();
+        dialog.show();
+    }
+
+
+    public void sendComment(View v) {
+        TextView et_comment = (TextView) v.findViewById( R.id.et_comment_page);
+        // KLUDGE
+        Thread.UncaughtExceptionHandler currentHandler = Thread.getDefaultUncaughtExceptionHandler();
+        if (currentHandler instanceof CustomExceptionHandler) {
+            ((CustomExceptionHandler) currentHandler).saveBugComment(et_comment.getText().toString());
+        }
     }
 
 }

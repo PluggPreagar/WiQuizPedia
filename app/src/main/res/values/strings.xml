@@ -12,7 +12,7 @@
     <string name="pref_only_extract">ask only summary of page</string>
     <string name="pref_cat_content_title">query content settings</string>
     <string name="pref_cat_gui_title">gui behaviour</string>
-    <string name="opt_menu_data_refresh">refresh data</string>
+    <string name="opt_menu_data_refresh">update app</string>
     <string name="opt_menu_settings">settings ...</string>
     <string name="pref_token_across_pages">use answers from other pages</string>
     <string name="pref_cat_generate_query">generate query</string>
@@ -31,4 +31,10 @@
  </string>
     <string name="opt_menu_show_help">show help</string>
     <string name="pref_qry_almost_correct">exact answer only</string>
+    <string name="pref_err_upload_err">upload anonym error message</string>
+    <string name="opt_menu_err_show">show last trace file</string>
+    <string name="opt_menu_send_comment"><![CDATA[send commend >>]]></string>
+    <string name="coment_page_title">send comment</string>
+    <string name="et_comment_page_text" />
+    <string name="tv_comment_rcv">recent comments ...</string>
 </resources>

@@ -6,6 +6,7 @@ import android.util.Log;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
+import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -38,7 +39,7 @@ public class CustomExceptionHandler implements Thread.UncaughtExceptionHandler {
     // https://stackoverflow.com/questions/601503/how-do-i-obtain-crash-data-from-my-android-application#2855736
 
     private Thread.UncaughtExceptionHandler defaultUEH;
-    private String localPath;
+    public static String localPath;
     private String url;
 
     /*
@@ -58,21 +59,29 @@ public class CustomExceptionHandler implements Thread.UncaughtExceptionHandler {
         e.printStackTrace(printWriter);
         String stacktrace = result.toString();
         printWriter.close();
-        String filename = timestamp + ".stacktrace";
+        //String filename = timestamp + ".stacktrace";
+        String filename = "error.txt";
+        String errorInfo = MainActivity.getErrorInfo();
+        new doitAsync(stacktrace, errorInfo, filename,  t,  e).execute();
+        // defaultUEH.uncaughtException(t, e);
+    }
 
-        new doitAsync(stacktrace, filename,  t,  e).execute();
+    public void saveBugComment(String comment) {
+        new doitAsync("Comment", comment, null,  null,  null).execute();
         // defaultUEH.uncaughtException(t, e);
     }
 
     class doitAsync extends AsyncTask<Void, Integer, Integer>
     {
         private final String filename;
+        private final String errorInfo;
         private final String stacktrace;
         private final Throwable e;
         private final Thread t;
 
-        doitAsync(String stacktrace, String filename, Thread t, Throwable e) {
+        doitAsync(String stacktrace, String errorInfo, String filename, Thread t, Throwable e) {
             this.stacktrace = stacktrace;
+            this.errorInfo = errorInfo;
             this.filename = filename;
             this.t = t;
             this.e = e;
@@ -80,17 +89,17 @@ public class CustomExceptionHandler implements Thread.UncaughtExceptionHandler {
 
         @Override
         protected Integer doInBackground(Void... voids) {
-            if (localPath != null) {
-                writeToFile(stacktrace, filename);
+            if (localPath != null && null != filename) {
+                writeToFile(stacktrace, errorInfo, filename);
             }
-            if (url != null) {
-                sendToServer(stacktrace, filename);
+            if (url != null && 0<(Settings.mode & Settings.ERR_UPLOAD_ERR)) {
+                sendToServer(stacktrace, errorInfo, filename);
             }
-            defaultUEH.uncaughtException(t, e);
+            if (null != t && null != e)   defaultUEH.uncaughtException(t, e);
             return null;
         }
 
-        private void writeToFile(String stacktrace, String filename) {
+        private void writeToFile(String stacktrace, String errorInfo, String filename) {
             try {
                 BufferedWriter bos = new BufferedWriter(new FileWriter(
                         localPath + "/" + filename));
@@ -102,7 +111,7 @@ public class CustomExceptionHandler implements Thread.UncaughtExceptionHandler {
             }
         }
 
-        private void sendToServer(String stacktrace, String filename)  {
+        private void sendToServer(String stacktrace, String errorInfo, String filename)  {
             try{
                 URL object=new URL(url);
                 HttpURLConnection con = (HttpURLConnection) object.openConnection();
@@ -116,6 +125,7 @@ public class CustomExceptionHandler implements Thread.UncaughtExceptionHandler {
                 OutputStream os = con.getOutputStream();
                 BufferedWriter writer = new BufferedWriter(  new OutputStreamWriter(os, "UTF-8"));
                 writer.write(getQuery("filename", filename));
+                writer.write(getQuery("errorInfo", errorInfo));
                 writer.write(getQuery("stacktrace", stacktrace));
 
                 writer.flush();
@@ -159,13 +169,20 @@ public class CustomExceptionHandler implements Thread.UncaughtExceptionHandler {
 
         private String getQuery(String name, String value) throws UnsupportedEncodingException
         {
-            return URLEncoder.encode(name, "UTF-8") + "=" + URLEncoder.encode(value, "UTF-8")+"&";
+            return null == value ? "" : URLEncoder.encode(name, "UTF-8") + "=" + URLEncoder.encode(value, "UTF-8")+"&";
         }
 
     }
 
     // https://github.com/Pretz/improved-android-remote-stacktrace/blob/master/src/com/nullwire/trace/ExceptionHandler.java
     public static boolean register(Context context) {
+        // Environment.DIRECTORY_DOCUMENTS
+        File errorDir = context.getExternalFilesDir(null);
+        errorDir = null == errorDir ? null : new File(errorDir, "error");
+        if (!errorDir.exists()) errorDir.mkdir();
+        if (!errorDir.exists()) errorDir = null;
+        final File errorDir2 = errorDir;
+
         new Thread() {
             @Override
             public void run() {
@@ -177,7 +194,7 @@ public class CustomExceptionHandler implements Thread.UncaughtExceptionHandler {
                 if (!(currentHandler instanceof CustomExceptionHandler)) {
                     // Register default exceptions handler
                     Thread.setDefaultUncaughtExceptionHandler(
-                            new CustomExceptionHandler(null, "http://preisfrieden.de/WiQuizPedia/upload.php"));
+                            new CustomExceptionHandler(errorDir2.getAbsolutePath(), "http://preisfrieden.de/WiQuizPedia/upload.php"));
                 }
             }
         }.start();
