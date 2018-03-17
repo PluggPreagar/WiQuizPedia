@@ -98,14 +98,14 @@ public class MainActivity extends AppCompatActivity implements DownloadCallback 
 
     public static String getErrorInfo (boolean longVersion) {
         //(EditText) MainActivity.findViewById(R.id.tv_title);
-        return version
-                + (null == query ? "" : query.title)
+        return (version.replaceAll("[0-9]*$", "")
+                + (null == query ? "" : " " + query.title)
                 + (longVersion ? " -- " + (null == curTitle ? "-" : curTitle)
                                + " -- " + (null == content || null == content.recentQuery ? "" : content.recentQuery.size())
                                + " -- " + (null == query || null == query.msg ? "" : Util.shortenString(query.msg))
                             : ""
-                    )
-                ;
+                    )).replace("\n", " ").replace("\r", " ").replaceAll("\\s+", " ")
+        ;
     }
 
     public String getVersionInfo(Context context) {
@@ -679,12 +679,6 @@ public class MainActivity extends AppCompatActivity implements DownloadCallback 
         dialog.setCanceledOnTouchOutside(true);
         //for dismissing anywhere you touch
         final TextView tv_comment = (TextView) dialog.findViewById(R.id.et_comment_page);
-        tv_comment.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View view) {
-                    setTitleText("", false);
-                }
-            });
         tv_comment.setOnKeyListener(new OnKeyListener() {
                 public boolean onKey(View v, int keyCode, KeyEvent event) {
                     if (event.getAction() == KeyEvent.ACTION_DOWN && keyCode == KeyEvent.KEYCODE_ENTER) {

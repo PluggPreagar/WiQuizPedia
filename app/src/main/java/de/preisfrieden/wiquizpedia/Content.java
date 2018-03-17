@@ -48,9 +48,10 @@ public class Content {
     }
 
     static ReplacePattern[] replacePatterns = {
-        new ReplacePattern( "Date", "(\\d{2}\\.)\\s*(Januar|Jänner|Februar|März|April|Mai|Juni|Juli|August|September|Oktober|November|Dezember|\\d{2,4}\\.)\\s*(\\d{2,4})", -1)
+        new ReplacePattern( "Date", "(\\d{1,2}\\.\\s*)(Januar|Jänner|Februar|März|April|Mai|Juni|Juli|August|September|Oktober|November|Dezember|\\d{2,4}\\.)(\\s*\\d{2,4})", -1)
         ,new ReplacePattern( "DateYM", "\\b([0-9]{4}/(?:[1-9]|1[012]))\\b", -1)
         ,new ReplacePattern( "Year", "\\b([0-9]{4})\\b", -1)
+        ,new ReplacePattern( "Time", "\\b([0-9][0-9]:[0-9][0-9](?::[0-9][0-9])?)\\b", 1)
         ,new ReplacePattern("RangAdj", "\\b((?:zweit|dritt|viert|fünft|sechst|siebent|acht|neun|zehnt|elft|zwölft)(?:größte|kleinste|höchste))\\b", -1)
         ,new ReplacePattern("RangNum", "\\b[0-9]+\\.\\b", -1)
         ,new ReplacePattern("BigNum", "\\b([0-9]+[.][0-9]+(?:,[0-9]+)?)\\b", -1)
@@ -277,8 +278,9 @@ public class Content {
             msg = msg.replaceAll("\\{\\{[^\\{]*?\\}\\}", ""); // {{..}}
         }
         msg = msg.replaceAll("\\\\n", "\n");
-        msg = msg.replaceAll("(\\d{2}\\.)\\s+(Januar|Februar|März|April|Mai|Juni|Juli|August|September|Oktober|November|Dezember)\\s*(\\d{2,4})", "$1$2$3"); // 14. März 1879 -> 14.März.1879 sep Date from End of Sentencte
-        msg = msg.replaceAll("(?<!\\d)\\.\\s*", ".\n");
+        msg = msg.replaceAll("(\\d{2}\\.)\\s+(Januar|Februar|März|April|Mai|Juni|Juli|August|September|Oktober|November|Dezember)\\s*(\\d{2,4})", "$1&nbsp;$2&nbsp;$3"); // 14. März 1879 -> 14.März.1879 sep Date from End of Sentencte
+        msg = msg.replaceAll("(?<!\\d)\\.\\s*(?![a-z ])", ".\n");
+        msg = msg.replaceAll("&nbsp;", " ");
         return msg;
     }
 

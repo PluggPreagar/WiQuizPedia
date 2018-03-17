@@ -32,9 +32,9 @@ public class OnSwipeTouchListener implements View.OnTouchListener {
         }
 
         @Override
-        public boolean onSingleTapUp(MotionEvent e) {
+        public boolean onSingleTapConfirmed(MotionEvent e) {
             onSingleTapUp2();
-            return super.onSingleTapUp(e);
+            return super.onSingleTapConfirmed(e);
         }
 
         @Override

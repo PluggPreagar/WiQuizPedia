@@ -24,6 +24,19 @@
 		ftruncate($handle, 20000);
 		fclose($handle);
 	}
-    file_put_contents($filename, date("Y-m-d H:i:s",time()).": ".$errorInfo. "\n", FILE_APPEND);
-    file_put_contents("upload.log", time().": ".$filename."  ".substr($message,0,100). "\n" , FILE_APPEND);
+    file_put_contents($filename, date("Y-m-d H:i:s",time())." : ".$errorInfo. "\n", FILE_APPEND);
+    if ( "Comment" != $message && "CommentDetail" == $message) {file_put_contents("upload.log", time().": ".$filename."  ".substr($message,0,100). "\n" , FILE_APPEND);}
+
+	$filename="";
+	if (ereg(' --- (B:|Bug) ', $errorInfo)) {$filename="z_bug.trc";}
+	if (ereg(' --- (I:|Idee) ', $errorInfo)) {$filename="z_idea.trc";}
+	if ( "" != $filename && "CommentDetail" == $message){
+		if(!file_exists($filename)) {
+		} elseif (filesize($filename) > 50000) {
+			$handle = fopen($filename, 'r+');
+			ftruncate($handle, 20000);
+			fclose($handle);
+		}
+		file_put_contents($filename, date("Y-m-d H:i:s",time())." : ".$errorInfo. "\n", FILE_APPEND);
+	}
 ?>
