@@ -1,5 +1,7 @@
 package de.preisfrieden.wiquizpedia;
 
+import android.util.Log;
+
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -9,6 +11,7 @@ import java.io.Reader;
 import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -32,9 +35,11 @@ public class Download {
         String fileName = urls.length>2 ? urls[2] : null;
         if ( urls != null && urls.length > 0) {
             String urlString = urls[0];
-            result = urls.length>1 && urls[1].contains(FORCELOAD) ? null : cache.get( urlString) ;
+            boolean force = urls.length>1 && urls[1].contains(FORCELOAD);
+            result = force ? null : cache.get( urlString) ;
             if (null == result ) {
                 try {
+                    Log.i("downloadUrl", ": start " + (force ? "(forced) " : "") + "... " + Util.shortenString(urlString));
                     URL url = new URL(urlString);
                     result = downloadUrl(url, fileName);
                     cache.put(urlString, result);
@@ -43,6 +48,9 @@ public class Download {
                     e.printStackTrace();
                     //throw new IOException(e);
                 }
+                Log.i("downloadUrl", ": done " + (null == result ? "<null>" : result.length() ) + " for " +  Util.shortenString(urlString));
+            } else {
+                Log.i("downloadUrl", ": from cache " + (null == result ? "<null>" : result.length()) + " for " + Util.shortenString(urlString));
             }
         }
         return result;

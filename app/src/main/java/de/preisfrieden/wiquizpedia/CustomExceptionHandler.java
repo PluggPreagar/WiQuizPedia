@@ -41,6 +41,7 @@ public class CustomExceptionHandler implements Thread.UncaughtExceptionHandler {
     private Thread.UncaughtExceptionHandler defaultUEH;
     public static String localPath;
     private String url;
+    public static final String errorFileName = "error.txt";
 
     /*
      * if any of the parameters is null, the respective functionality
@@ -60,14 +61,14 @@ public class CustomExceptionHandler implements Thread.UncaughtExceptionHandler {
         String stacktrace = result.toString();
         printWriter.close();
         //String filename = timestamp + ".stacktrace";
-        String filename = "error.txt";
         String errorInfo = MainActivity.getErrorInfo();
-        new doitAsync(stacktrace, errorInfo, filename,  t,  e).execute();
+        new doitAsync(stacktrace, errorInfo, errorFileName,  t,  e).execute();
         // defaultUEH.uncaughtException(t, e);
     }
 
     public void saveBugComment(String comment) {
-        new doitAsync("Comment", comment, null,  null,  null).execute();
+        new doitAsync("Comment", MainActivity.getErrorInfo(false) + ": " + comment, null,  null,  null).execute();
+        new doitAsync("CommentDetail",  MainActivity.getErrorInfo() + " --- " + comment, null,  null,  null).execute();
         // defaultUEH.uncaughtException(t, e);
     }
 

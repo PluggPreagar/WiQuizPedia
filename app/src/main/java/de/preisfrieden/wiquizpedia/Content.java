@@ -48,7 +48,7 @@ public class Content {
     }
 
     static ReplacePattern[] replacePatterns = {
-        new ReplacePattern( "Date", "(\\d{2}\\.)\\s*(Januar|Februar|März|April|Mai|Juni|Juli|August|September|Oktober|November|Dezember|\\d{2,4}\\.)\\s*(\\d{2,4})", -1)
+        new ReplacePattern( "Date", "(\\d{2}\\.)\\s*(Januar|Jänner|Februar|März|April|Mai|Juni|Juli|August|September|Oktober|November|Dezember|\\d{2,4}\\.)\\s*(\\d{2,4})", -1)
         ,new ReplacePattern( "DateYM", "\\b([0-9]{4}/(?:[1-9]|1[012]))\\b", -1)
         ,new ReplacePattern( "Year", "\\b([0-9]{4})\\b", -1)
         ,new ReplacePattern("RangAdj", "\\b((?:zweit|dritt|viert|fünft|sechst|siebent|acht|neun|zehnt|elft|zwölft)(?:größte|kleinste|höchste))\\b", -1)
@@ -56,7 +56,7 @@ public class Content {
         ,new ReplacePattern("BigNum", "\\b([0-9]+[.][0-9]+(?:,[0-9]+)?)\\b", -1)
         ,new ReplacePattern("Real", "\\b([0-9]+)\\b", -1)
         ,new ReplacePattern("Number", "\\b([0-9,]+)\\b", -1)
-        ,new ReplacePattern("Ort", "\\b(in\\s+[A-Z][^,. ]+)\\b", 0.10)
+        ,new ReplacePattern("Ort", "\\b(in\\s+[A-Z][^,. ]+)\\b", 0.80)
     }
     ;
 
@@ -119,6 +119,9 @@ public class Content {
         parse( data );
         return createQuery();
     }
+
+    //
+    //                  "https://de.wikipedia.org/w/api.php?action=query&prop=extracts&exintro=&explaintext=&redirects=&formatversion=2&format=json&titles=Albert+Einstein" -> "{"batchcomplete":true,"query":{"normalized":[{"fromencoded":false,"from":"Albert_Einstein","to":"Albert Einstein"}],"pages":[{"pageid":1278360,"ns":0,"title":"Albert Einstein","extract":"Albert Einstein (* 14. März 1879 in Ulm, Württemberg, Deutsches Reich; † 18. April 1955 in Princeton, New Jersey, Vereinigte Staaten) gilt als einer der bedeutendsten theoretischen Physiker der Wissenschaftsgeschichte. Seine Forschungen zur Struktur von Materie, Raum und Zeit sowie zum Wesen der Gravitation veränderten maßgeblich das zuvor geltende newtonsche Weltbild.\nEinsteins Hauptwerk, die Relativitätstheorie, machte ihn weltberühmt. Im Jahr 1905 erschien seine Arbeit mit dem Titel Zur Elektrodynamik bewegter Körper, deren Inhalt heute als spezielle Relativitätstheorie bezeichnet wird. 1915 publizierte er die allgemeine Relativitätstheorie. Auch zur Quantenphysik leistete er wesentliche Beiträge. „Für seine Verdienste um die theoretische Physik, besonders für seine Entdeckung des Gesetzes des photoelek"
 
     public static String getUrl(String query) {
         String urlStr = "https://de.wikipedia.org/w/api.php?action=query&prop=extracts&exintro=&explaintext=&redirects=&formatversion=2&format=json";

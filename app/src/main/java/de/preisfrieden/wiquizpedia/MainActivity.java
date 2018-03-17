@@ -92,13 +92,20 @@ public class MainActivity extends AppCompatActivity implements DownloadCallback 
 
     private static String version = "";
 
-
     public static String getErrorInfo () {
+     return getErrorInfo(true);
+    }
+
+    public static String getErrorInfo (boolean longVersion) {
         //(EditText) MainActivity.findViewById(R.id.tv_title);
         return version
                 + (null == query ? "" : query.title)
-                + " -- " + (null == content || null == content.recentQuery ? "" : content.recentQuery.size())
-                + " -- " + (null == curTitle ? "-" : curTitle);
+                + (longVersion ? " -- " + (null == curTitle ? "-" : curTitle)
+                               + " -- " + (null == content || null == content.recentQuery ? "" : content.recentQuery.size())
+                               + " -- " + (null == query || null == query.msg ? "" : Util.shortenString(query.msg))
+                            : ""
+                    )
+                ;
     }
 
     public String getVersionInfo(Context context) {
@@ -165,12 +172,8 @@ public class MainActivity extends AppCompatActivity implements DownloadCallback 
 
             @Override
             public boolean onSingleTapUp2() {
-                MainActivity.toast("Tap");
-                /*
-                TextView textView = (TextView) findViewById(R.id.tv_question);
-                MainActivity.toast("Tap: " + textView.getLineCount() + "*" + textView.getLineHeight() , false);
-                textView.setHeight( textView.getHeight() + textView.getLineHeight());
-                */
+                MainActivity.toast("comment");
+                showComment();
                 return true;
             }
 
@@ -526,21 +529,21 @@ public class MainActivity extends AppCompatActivity implements DownloadCallback 
             public void updateFromDownload(Object result) {
                 if (null != result && result instanceof String) {
                     String newVersion = (String) result;
-                    String dateMax = null;
+                    Long minutesDiff = null;
                     try {
                         SimpleDateFormat dateFormat = new SimpleDateFormat("yyMMddHHmm");
-                        Date date = dateFormat.parse(version.replaceAll(".* ",""));
-                        dateMax = dateFormat.format(date.getTime() + 5*60*1000);
+                        Date dateThis = dateFormat.parse(version.replaceAll(".* ",""));
+                        Date dateNew = dateFormat.parse(newVersion);
+                        minutesDiff = (dateNew.getTime() - dateThis.getTime()) / 1000 / 60;
                     } catch (ParseException e) {
                         e.printStackTrace();
                     }
-                    String msg = "  downgrade to " ;
-                    if (!MainActivity.version.contains( newVersion) &&
-                            ( null == dateMax || 0 < newVersion.compareTo(dateMax)  )) {
-                        toast("New version of app available!");
-                        msg = "     update to ";
+                    if (null == minutesDiff) {
+                    } else {
+                        if (5 < minutesDiff) toast("New version of app available!");
+                        String msg =  5 < minutesDiff ? "     update to " + newVersion : -5 < minutesDiff ? "     already update to date" : "  downgrade to " + newVersion;
+                        ((MenuItem) menu_view.findItem(R.id.opt_menu_data_refresh)).setTitle(msg);
                     }
-                    ((MenuItem) menu_view.findItem(R.id.opt_menu_data_refresh)).setTitle(msg + newVersion);
 
                 }
             }
@@ -564,12 +567,12 @@ public class MainActivity extends AppCompatActivity implements DownloadCallback 
 
             case R.id.opt_menu_err_show:
                 Intent intent = new Intent(Intent.ACTION_VIEW);
-                File file = new File( CustomExceptionHandler.localPath, "error.txt");
+                File file = new File( CustomExceptionHandler.localPath, CustomExceptionHandler.errorFileName);
                 if (file.exists()) {
                     String modTime = new SimpleDateFormat("yyyyMMdd HH:mm:ss").format(new Date(file.lastModified()));
                     try {
                         String trace = new Download().readStream(new FileInputStream(file), 5000);
-                        showErrorTrace( trace + "\n\n"+ "\t\t\t" + modTime + "\n\t\t\t(click to close)\n\n");
+                        showErrorTrace( modTime + ":\n" + trace + "\n\n\t\t\t(click to close)\n\n");
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
@@ -579,6 +582,8 @@ public class MainActivity extends AppCompatActivity implements DownloadCallback 
                     intent.setDataAndType(uri, "text/plain");
                     startActivity(intent);
                     */
+                } else {
+                    toast("no error files found - jjjiiiipeeeee ;-)");
                 }
                 break;
 
@@ -621,8 +626,11 @@ public class MainActivity extends AppCompatActivity implements DownloadCallback 
     public void showHelp(){
 
         final Dialog dialog = new Dialog(this);
-        dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
-        dialog.getWindow().setBackgroundDrawable(new ColorDrawable(android.graphics.Color.TRANSPARENT));
+        //dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
+        Drawable helpDoc = getResources().getDrawable(R.mipmap.screenshot_help_dok4_head);
+        helpDoc.setAlpha(200);
+        dialog.getWindow().setBackgroundDrawable( helpDoc );
+        //dialog.getWindow().setBackgroundDrawable(new ColorDrawable(android.graphics.Color.TRANSPARENT));
         dialog.setContentView(R.layout.help_page);
         dialog.setCanceledOnTouchOutside(true);
         //for dismissing anywhere you touch
