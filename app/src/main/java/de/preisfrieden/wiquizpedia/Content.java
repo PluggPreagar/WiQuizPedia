@@ -1,16 +1,12 @@
 package de.preisfrieden.wiquizpedia;
 
-import android.icu.text.Replaceable;
-
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.Serializable;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -164,7 +160,7 @@ public class Content {
             // --> https://en.wikipedia.org/w/api.php?format=json&action=query&generator=random&grnnamespace=0&prop=revisions|images&rvprop=content&grnlimit=10
             // --> plainstyle:
             //
-            prop = DownloadTask2.NOCACHE;
+            prop = DownloadTask2.FORCELOAD;
             if (potentialNextQueries.size()<3) potentialNextQueries.clear(); // force to have more than 3
             data = getQueryFromPotentialNextQueries();
         } else {
@@ -178,7 +174,7 @@ public class Content {
                 do {
                     data = download.downloadUrl(urlStr, prop);
                     data = extractArticleAndRef(data);
-                    prop = DownloadTask2.NOCACHE;
+                    prop = DownloadTask2.FORCELOAD;
                 }
                 while (query.isEmpty() && parseTitle(data).contains(":")); // skipp "Diskussion:" "Benutzer:" ... wikipedia-pseudo sites
             } catch (InterruptedException e) {

@@ -1,5 +1,7 @@
 package de.preisfrieden.wiquizpedia;
 
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -7,7 +9,6 @@ import java.io.Reader;
 import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.net.URLConnection;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -19,7 +20,7 @@ import javax.net.ssl.HttpsURLConnection;
 
 public class Download {
 
-    public static String NOCACHE = "NOCACHE";
+    public static String FORCELOAD = "FORCELOAD";
     private static Map<String,String> cache = new HashMap<String,String>();
 
     public static void inject (String url, String data) {
@@ -28,13 +29,14 @@ public class Download {
 
     public String downloadUrl(String... urls) {
         String result = null;
+        String fileName = urls.length>2 ? urls[2] : null;
         if ( urls != null && urls.length > 0) {
             String urlString = urls[0];
-            result = urls.length>1 && urls[1].contains( NOCACHE) ? null : cache.get( urlString) ;
+            result = urls.length>1 && urls[1].contains(FORCELOAD) ? null : cache.get( urlString) ;
             if (null == result ) {
                 try {
                     URL url = new URL(urlString);
-                    result = downloadUrl(url);
+                    result = downloadUrl(url, fileName);
                     cache.put(urlString, result);
                     // if (resultString == null) throw new IOException("No response received.");
                 } catch (Exception e) {
@@ -46,7 +48,7 @@ public class Download {
         return result;
     }
 
-    private String downloadUrl(URL url) throws IOException {
+    private String downloadUrl(URL url, String fileName) throws IOException {
         InputStream stream = null;
         HttpURLConnection connection = null;
         String result = null;
@@ -56,7 +58,7 @@ public class Download {
             connection.setConnectTimeout(3000);
             connection.setRequestMethod("GET");
             connection.setDoInput(true);
-            connection.setRequestProperty("Content-Type", "application/json;charset=utf-8");
+            if (!url.getFile().endsWith(".apk")) connection.setRequestProperty("Content-Type", "application/json;charset=utf-8");
             connection.connect();
             int responseCode = connection.getResponseCode();
             if (responseCode != HttpsURLConnection.HTTP_OK) {
@@ -66,8 +68,7 @@ public class Download {
             stream = connection.getInputStream();
             //publishProgress(DownloadCallback.Progress.GET_INPUT_STREAM_SUCCESS, 0);
             if (stream != null) {
-                // Converts Stream to String with max length of 500.
-                result = readStream(stream, 50000);
+                result = null == fileName ? readStream(stream, 50000) : readStream(stream, fileName);// Converts Stream to String with max length of 500.
             }
         } catch(Exception e) {
             e.printStackTrace();
@@ -102,5 +103,24 @@ public class Download {
         }
         return buffer.toString();
     }
+
+    public String readStream(InputStream instream, String fileName)
+            throws IOException, UnsupportedEncodingException {
+
+        File file = new File(fileName);
+        file.getParentFile().mkdirs();
+        FileOutputStream fos = new FileOutputStream(file);
+
+        byte[] buffer = new byte[1024];
+        int len1 = 0;
+        while ((len1 = instream.read(buffer)) != -1) {
+            fos.write(buffer, 0, len1);
+        }
+        fos.close();
+        instream.close();// till here, it works fine - .apk is download to my sdcard in download file
+
+        return fileName;
+    }
+
 
 }

@@ -3,24 +3,34 @@
     xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <item
+        android:id="@+id/opt_menu_show_help"
+        android:title="@string/opt_menu_show_help" />
+
+    <item
         android:id="@+id/opt_menu_settings"
         android:title="@string/opt_menu_settings"
         app:showAsAction="never" />
 
     <item
-        android:id="@+id/opt_menu_show_help"
-        android:title="@string/opt_menu_show_help" />
-    <item
-        android:id="@+id/opt_menu_data_refresh"
-        android:title="@string/opt_menu_data_refresh"
-        app:showAsAction="never" />
-    <item
-        android:id="@+id/opt_menu_err_show"
-        android:title="@string/opt_menu_err_show"
-        app:showAsAction="never" />
-    <item
         android:id="@+id/opt_menu_send_comment"
         android:title="@string/opt_menu_send_comment" />
 
+    <group
+        android:id="@+id/opt_menu_gr_system"
+        android:enabled="true"
+        android:visible="true">
+        <item
+            android:id="@+id/opt_menu_version"
+            android:title="@string/opt_menu_version" />
+        <item
+            android:id="@+id/opt_menu_data_refresh"
+            android:title="@string/opt_menu_data_refresh"
+            app:showAsAction="never" />
 
+        <item
+            android:id="@+id/opt_menu_err_show"
+            android:title="@string/opt_menu_err_show"
+            app:showAsAction="never" />
+
+    </group>
 </menu>

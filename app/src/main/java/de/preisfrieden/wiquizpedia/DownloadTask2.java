@@ -19,7 +19,7 @@ import javax.net.ssl.HttpsURLConnection;
 
 public class DownloadTask2 extends AsyncTask<String, Void, String> {
 
-    public static String NOCACHE = "NOCACHE";
+    public static String FORCELOAD = "FORCELOAD";
 
     private DownloadCallback<String> mCallback;
 

@@ -21,6 +21,7 @@ public class Settings {
     public static final int MODE_TOKEN_NOUN_MARKER = 64;
     public static final int MODE_TOKEN_ALMOST_CORRECT =128;
     public static final int ERR_UPLOAD_ERR = 256;
+    public static final int SYS_CHECK_UPDATE = 512;
 
     public static int mode = MODE_AUTO_NEXT;
     public static int max_queries_per_sentence = 0;
@@ -44,6 +45,7 @@ public class Settings {
         setMode4Preferences( sharedPref,"pref_qry_almost_correct", false,  MODE_TOKEN_ALMOST_CORRECT );
 
         setMode4Preferences( sharedPref,"pref_err_upload_err", true,  ERR_UPLOAD_ERR );
+        setMode4Preferences( sharedPref,"pref_sys_check_upd", true,  SYS_CHECK_UPDATE );
 
         max_queries_per_sentence = Integer.valueOf(sharedPref.getString("pref_qry_max_count_p_sentence", "0"));
 

@@ -32,9 +32,12 @@
     <string name="opt_menu_show_help">show help</string>
     <string name="pref_qry_almost_correct">exact answer only</string>
     <string name="pref_err_upload_err">upload anonym error message</string>
-    <string name="opt_menu_err_show">show last trace file</string>
-    <string name="opt_menu_send_comment"><![CDATA[send commend >>]]></string>
-    <string name="coment_page_title">send comment</string>
+    <string name="opt_menu_err_show">show last error</string>
+    <string name="opt_menu_send_comment">comment</string>
+    <string name="coment_page_title">Comment</string>
     <string name="et_comment_page_text" />
     <string name="tv_comment_rcv">recent comments ...</string>
+    <string name="opt_menu_version">Version: ...</string>
+    <string name="pref_sys_check_upd">check for updates</string>
+    <string name="pref_sys_title">system settings</string>
 </resources>

@@ -2,11 +2,6 @@
 <PreferenceScreen xmlns:tools="http://schemas.android.com/tools"
     xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <CheckBoxPreference
-        android:defaultValue="true"
-        android:key="pref_err_upload_err"
-        android:title="@string/pref_err_upload_err" />
-
     <PreferenceCategory android:title="@string/pref_cat_content_title">
         <CheckBoxPreference
             android:defaultValue="true"
@@ -56,6 +51,18 @@
             android:key="pref_auto_next"
             android:title="@string/pref_auto_next" />
 
+    </PreferenceCategory>
+
+
+    <PreferenceCategory android:title="@string/pref_sys_title">
+        <CheckBoxPreference
+            android:defaultValue="true"
+            android:key="pref_sys_check_upd"
+            android:title="@string/pref_sys_check_upd" />
+        <CheckBoxPreference
+            android:defaultValue="true"
+            android:key="pref_err_upload_err"
+            android:title="@string/pref_err_upload_err" />
     </PreferenceCategory>
 
 </PreferenceScreen>

@@ -3,18 +3,20 @@ package de.preisfrieden.wiquizpedia;
 import android.app.Activity;
 import android.app.Dialog;
 import android.content.ActivityNotFoundException;
+import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Build;
+import android.os.Environment;
 import android.os.Handler;
 import android.preference.PreferenceManager;
 import android.support.annotation.RequiresApi;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.GestureDetector;
 import android.view.KeyEvent;
 import android.view.Menu;
@@ -35,7 +37,10 @@ import android.widget.Toast;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 
@@ -85,11 +90,27 @@ public class MainActivity extends AppCompatActivity implements DownloadCallback 
     private String initTitle = "Albert Einstein";
     private String initContent = "{\"batchcomplete\":true,\"query\":{\"normalized\":[{\"fromencoded\":false,\"from\":\"Albert_Einstein\",\"to\":\"Albert Einstein\"}],\"pages\":[{\"pageid\":1278360,\"ns\":0,\"title\":\"Albert Einstein\",\"extract\":\"Albert Einstein (* 14. März 1879 in Ulm, Württemberg, Deutsches Reich; † 18. April 1955 in Princeton, New Jersey, Vereinigte Staaten) gilt als einer der bedeutendsten theoretischen Physiker der Wissenschaftsgeschichte. Seine Forschungen zur Struktur von Materie, Raum und Zeit sowie zum Wesen der Gravitation veränderten maßgeblich das zuvor geltende newtonsche Weltbild.\\nEinsteins Hauptwerk, die Relativitätstheorie, machte ihn weltberühmt. Im Jahr 1905 erschien seine Arbeit mit dem Titel Zur Elektrodynamik bewegter Körper, deren Inhalt heute als spezielle Relativitätstheorie bezeichnet wird. 1915 publizierte er die allgemeine Relativitätstheorie. Auch zur Quantenphysik leistete er wesentliche Beiträge. „Für seine Verdienste um die theoretische Physik, besonders für seine Entdeckung des Gesetzes des photoelektrischen Effekts“, erhielt er den Nobelpreis des Jahres 1921, der ihm 1922 überreicht wurde. Seine theoretischen Arbeiten spielten – im Gegensatz zur verbreiteten Meinung – beim Bau der Atombombe und der Entwicklung der Kernenergie nur eine indirekte Rolle.Albert Einstein gilt als Inbegriff des Forschers und Genies. Er nutzte seine außerordentliche Bekanntheit auch außerhalb der naturwissenschaftlichen Fachwelt bei seinem Einsatz für Völkerverständigung und Frieden. In diesem Zusammenhang verstand er sich selbst als Pazifist, Sozialist und Zionist.\\nIm Laufe seines Lebens war Einstein Staatsbürger mehrerer Länder: Durch Geburt besaß er die württembergische Staatsbürgerschaft. Von 1896 bis 1901 staatenlos, ab 1901 bis zu seinem Tode Staatsbürger der Schweiz, war er 1911/12 in Österreich-Ungarn auch Bürger Österreichs. Von 1914 bis 1932 lebte Einstein in Berlin und war als Bürger Preußens erneut Staatsangehöriger im Deutschen Reich. Mit der Machtergreifung Hitlers gab er 1933 den deutschen Pass endgültig ab und wurde 1934 vom Deutschen Reich strafausgebürgert. Zusätzlich zu seinem seit 1901 geltenden Schweizer Bürgerrecht erwarb er 1940 noch die amerikanische Staatsbürgerschaft.\"}]}}";
 
+    private static String version = "";
+
+
     public static String getErrorInfo () {
         //(EditText) MainActivity.findViewById(R.id.tv_title);
-        return (null == query ? "" : query.title)
+        return version
+                + (null == query ? "" : query.title)
                 + " -- " + (null == content || null == content.recentQuery ? "" : content.recentQuery.size())
                 + " -- " + (null == curTitle ? "-" : curTitle);
+    }
+
+    public String getVersionInfo(Context context) {
+        //http://devdeeds.com/auto-increment-build-number-using-gradle-in-android/
+        try {
+            version = context.getPackageManager()
+                    .getPackageInfo(context.getPackageName(), 0).versionName;
+        } catch (PackageManager.NameNotFoundException e) {
+            e.printStackTrace();
+        }
+        version = null == version ? "" : version;
+        return version;
     }
 
 
@@ -111,6 +132,7 @@ public class MainActivity extends AppCompatActivity implements DownloadCallback 
         // https://www.intertech.com/Blog/android-handling-the-unexpected/
         // https://stackoverflow.com/questions/601503/how-do-i-obtain-crash-data-from-my-android-application#2855736
         CustomExceptionHandler.register(this);
+        getVersionInfo(this);
 
         setContentView(R.layout.activity_main);
         // setHasOptionsMenu(true); // http://www.programmierenlernenhq.de/tutorial-android-options-menu-in-action-bar/
@@ -173,7 +195,7 @@ public class MainActivity extends AppCompatActivity implements DownloadCallback 
             }
         };
 
-        View view = findViewById(R.id.entire_view);
+        View view = findViewById(R.id.main_activity);
         view.setOnTouchListener( swipeTouchListener);
         this.getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN); // https://turbomanage.wordpress.com/2012/05/02/show-soft-keyboard-automatically-when-edittext-receives-focus/
 
@@ -336,7 +358,7 @@ public class MainActivity extends AppCompatActivity implements DownloadCallback 
     protected void setImageView( Drawable drawable){
         ImageView imageView = (ImageView) findViewById(R.id.imageView);
         if (null == drawable) {
-            imageView.setImageResource( R.mipmap.ic_launcher_v4 );
+            imageView.setImageResource( R.mipmap.ic_launcher_foreground_v0a1 );
         } else {
             imageView.setImageDrawable( (Drawable) drawable);
         }
@@ -401,7 +423,7 @@ public class MainActivity extends AppCompatActivity implements DownloadCallback 
             tv_title.setText( nullOrTitle );
             curTitle = nullOrTitle;
         }
-        tv_title.clearFocus();
+        findViewById(R.id.main_activity).requestFocus(); // https://stackoverflow.com/questions/14424654/how-to-clear-focus-for-edittext
         if (runProcess) processTvTitle( tv_title);
         return tv_title;
     }
@@ -484,9 +506,46 @@ public class MainActivity extends AppCompatActivity implements DownloadCallback 
     private static final int RESULT_SETTINGS = 1;
 
     @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
+    public boolean onCreateOptionsMenu( Menu menu) {
         // http://viralpatel.net/blogs/android-preferences-activity-example/
+        final Menu menu_view = menu;
+
         getMenuInflater().inflate(R.menu.menu_pref_fragment, menu);
+
+        ((MenuItem) menu.findItem(R.id.opt_menu_version)).setTitle("Version: " + version);
+        ((MenuItem) menu.findItem(R.id.opt_menu_data_refresh)).setTitle("     update ... " );
+
+        class VersionDownloader implements DownloadCallback {
+
+            VersionDownloader() {
+                DownloadTask2 downloadTask = new DownloadTask2( this );
+                downloadTask.execute("http://preisfrieden.de/WiQuizPedia/version.php", DownloadTask2.FORCELOAD);
+            }
+
+            @Override
+            public void updateFromDownload(Object result) {
+                if (null != result && result instanceof String) {
+                    String newVersion = (String) result;
+                    String dateMax = null;
+                    try {
+                        SimpleDateFormat dateFormat = new SimpleDateFormat("yyMMddHHmm");
+                        Date date = dateFormat.parse(version.replaceAll(".* ",""));
+                        dateMax = dateFormat.format(date.getTime() + 5*60*1000);
+                    } catch (ParseException e) {
+                        e.printStackTrace();
+                    }
+                    String msg = "  downgrade to " ;
+                    if (!MainActivity.version.contains( newVersion) &&
+                            ( null == dateMax || 0 < newVersion.compareTo(dateMax)  )) {
+                        toast("New version of app available!");
+                        msg = "     update to ";
+                    }
+                    ((MenuItem) menu_view.findItem(R.id.opt_menu_data_refresh)).setTitle(msg + newVersion);
+
+                }
+            }
+        }
+        if ( 0 < (Settings.mode & Settings.SYS_CHECK_UPDATE)) new VersionDownloader();
         return true;
     }
 
@@ -507,9 +566,10 @@ public class MainActivity extends AppCompatActivity implements DownloadCallback 
                 Intent intent = new Intent(Intent.ACTION_VIEW);
                 File file = new File( CustomExceptionHandler.localPath, "error.txt");
                 if (file.exists()) {
+                    String modTime = new SimpleDateFormat("yyyyMMdd HH:mm:ss").format(new Date(file.lastModified()));
                     try {
                         String trace = new Download().readStream(new FileInputStream(file), 5000);
-                        showErrorTrace(trace + "\n\n\n\t\t\t(click to close)\n\n");
+                        showErrorTrace( trace + "\n\n"+ "\t\t\t" + modTime + "\n\t\t\t(click to close)\n\n");
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
@@ -523,18 +583,7 @@ public class MainActivity extends AppCompatActivity implements DownloadCallback 
                 break;
 
             case R.id.opt_menu_data_refresh:
-                //String url = "https://github.com/PluggPreagar/WiQuizPedia/blob/master/app/release/app-release.apk?raw=true";
-                String url = "http://preisfrieden.de/WiQuizPedia/app-release.apk";
-                toast("get new version ..", true);
-                try {
-                    Intent myIntent = new Intent(Intent.ACTION_VIEW, Uri.parse( url ));
-                    startActivity(myIntent);
-                } catch (ActivityNotFoundException e) {
-                    Toast.makeText(this, "No application can handle this request."
-                            + " Please install a webbrowser",  Toast.LENGTH_LONG).show();
-                    e.printStackTrace();
-                }
-
+                updateVersion();
                 break;
 
             case R.id.opt_menu_settings:
@@ -598,6 +647,8 @@ public class MainActivity extends AppCompatActivity implements DownloadCallback 
         dialog.setCanceledOnTouchOutside(true);
         //for dismissing anywhere you touch
         TextView tv = (TextView) dialog.findViewById(R.id.tv_error_trace);
+        txt = txt.replaceAll("at\\s+.*WiQuizPedia","at WQP");
+        txt = txt.replaceAll("at\\s+[a-z.]*","at ");
         tv.setText(txt);
         tv.setOnClickListener(new View.OnClickListener() {
 
@@ -641,7 +692,7 @@ public class MainActivity extends AppCompatActivity implements DownloadCallback 
 
             CommentDownloader() {
                 DownloadTask2 downloadTask = new DownloadTask2( this );
-                downloadTask.execute("http://preisfrieden.de/WiQuizPedia/recentComment.php", DownloadTask2.NOCACHE);
+                downloadTask.execute("http://preisfrieden.de/WiQuizPedia/recentComment.php", DownloadTask2.FORCELOAD);
             }
 
             @Override
@@ -663,8 +714,43 @@ public class MainActivity extends AppCompatActivity implements DownloadCallback 
         // KLUDGE
         Thread.UncaughtExceptionHandler currentHandler = Thread.getDefaultUncaughtExceptionHandler();
         if (currentHandler instanceof CustomExceptionHandler) {
-            ((CustomExceptionHandler) currentHandler).saveBugComment(et_comment.getText().toString());
+            String msg = et_comment.getText().toString();
+            ((CustomExceptionHandler) currentHandler).saveBugComment(msg);
         }
+    }
+
+    public void updateVersion(){
+        toast("get new version ..", true);
+        final File apkFile = new File( this.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS), "app-release.apk");
+
+        class DownloadHandlerApk implements DownloadCallback {
+
+            DownloadHandlerApk() {
+                DownloadTask2 downloadTask = new DownloadTask2( this );
+                downloadTask.execute("http://preisfrieden.de/WiQuizPedia/app-release.apk", DownloadTask2.FORCELOAD, apkFile.getAbsolutePath() );
+            }
+
+            @Override
+            public void updateFromDownload(Object result) {
+                if (null != result && result instanceof String) {
+
+                    try {
+                        //Intent myIntent = new Intent(Intent.ACTION_VIEW, Uri.parse( url ));
+                        Intent myIntent = new Intent(Intent.ACTION_VIEW); // application/vnd.android.package-archive
+                        // does not work with non-file-URI (have to download first ... )
+                        myIntent.setDataAndType(  Uri.fromFile( new File((String) result) ), "application/vnd.android.package-archive");
+                        //Intent myIntent = new Intent(Intent.ACTION_VIEW, Uri.parse( url )); // call Webbrowser //  https://stackoverflow.com/questions/10943037/install-apk-without-downloading
+                        myIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                        startActivity(myIntent);
+                    } catch (ActivityNotFoundException e) {
+                        MainActivity.toast( "No application can handle this request." + " Please install a webbrowser");
+                        e.printStackTrace();
+                    }
+                }
+            }
+        }
+
+        new DownloadHandlerApk();
     }
 
 }

@@ -5,8 +5,10 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/colorPrimaryLight"
-    android:id="@+id/entire_view"
+    android:id="@+id/main_activity"
+    android:focusableInTouchMode="true"
     tools:context="de.preisfrieden.wiquizpedia.MainActivity">
+    <!-- https://stackoverflow.com/questions/14424654/how-to-clear-focus-for-edittext -->
 
     <AutoCompleteTextView
         android:id="@+id/tv_title"
@@ -116,7 +118,7 @@
         android:layout_marginEnd="16dp"
         android:layout_marginStart="16dp"
         android:layout_marginTop="16dp"
-        android:foreground="@mipmap/ic_launcher_v4_round"
+        android:foreground="@mipmap/ic_launcher_foreground_v0a1"
         android:scaleType="fitCenter"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"

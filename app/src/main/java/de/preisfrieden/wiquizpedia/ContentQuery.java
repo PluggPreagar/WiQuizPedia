@@ -54,7 +54,9 @@ public class ContentQuery {
 
             answer_token_id = tokenIdFound.remove( random.nextInt(tokenIdFound.size()));
             answer_token = token.getToken4Id(answer_token_id);
-            List<String> values4CategoryOfToken = new ArrayList<String>(token.getValues4CategoryOfToken(answer_token_id)); // TODO - do not copy ... just make random pick smarter
+            List<String> values = token.getValues4CategoryOfToken(answer_token_id);
+            // FIXME what does it mean: null==values ...
+            List<String> values4CategoryOfToken = null==values ? new ArrayList<String>() : new ArrayList<String>(values); // TODO - do not copy ... just make random pick smarter
 
             int max_queries_per_sentence = Settings.max_queries_per_sentence;
             if (0< max_queries_per_sentence && tokenIdFound.size() + 1 > max_queries_per_sentence) {
