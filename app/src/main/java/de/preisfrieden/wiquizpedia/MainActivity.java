@@ -13,14 +13,18 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Environment;
 import android.os.Handler;
+import android.os.PatternMatcher;
 import android.preference.PreferenceManager;
 import android.support.annotation.RequiresApi;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.text.Layout;
+import android.util.Log;
 import android.view.GestureDetector;
 import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.OnKeyListener;
 import android.view.Window;
@@ -42,6 +46,8 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 
 @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
@@ -231,7 +237,8 @@ public class MainActivity extends AppCompatActivity implements DownloadCallback 
     public void processTvTitle(EditText tv_title) {
         if (null == tv_title) tv_title = (EditText) findViewById(R.id.tv_title);
         String curTitle = tv_title.getText().toString();
-        boolean forceLoadData = null == query || curTitle.isEmpty() || !query.title.equals(curTitle);
+        boolean forceLoadData = null == query || query instanceof ContentQueryRef || curTitle.isEmpty() || !query.title.equals(curTitle);
+        if (forceLoadData) redraw();
         new ContentTask(this).execute(new ContentTaskParam(content, forceLoadData ? curTitle : null)); // ContentTask will block repeated calls ...
     }
 
@@ -248,7 +255,7 @@ public class MainActivity extends AppCompatActivity implements DownloadCallback 
 
     public void redraw() {
         String msg = null ;
-        if (null == query )query = new ContentQueryRef(null , content);
+        if (null == query )query = new ContentQueryRef(( List<String>) null , content);
 
         AutoCompleteTextView titleText = setTitleText(query.title, false);
         String picTitleNew = titleText.getText().toString();
@@ -392,7 +399,7 @@ public class MainActivity extends AppCompatActivity implements DownloadCallback 
     }
 
 
-    private AutoCompleteTextView setTitleText( String nullOrTitle) {
+    public AutoCompleteTextView setTitleText( String nullOrTitle) {
         return setTitleText(nullOrTitle, true);
     }
 
@@ -427,7 +434,10 @@ public class MainActivity extends AppCompatActivity implements DownloadCallback 
             curTitle = nullOrTitle;
         }
         findViewById(R.id.main_activity).requestFocus(); // https://stackoverflow.com/questions/14424654/how-to-clear-focus-for-edittext
-        if (runProcess) processTvTitle( tv_title);
+        if (runProcess) {
+            query = new ContentQueryRef( nullOrTitle , content);
+            processTvTitle( tv_title);
+        }
         return tv_title;
     }
 
@@ -628,7 +638,7 @@ public class MainActivity extends AppCompatActivity implements DownloadCallback 
         final Dialog dialog = new Dialog(this);
         //dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
         Drawable helpDoc = getResources().getDrawable(R.mipmap.screenshot_help_dok4_head);
-        helpDoc.setAlpha(200);
+        helpDoc.setAlpha(220);
         dialog.getWindow().setBackgroundDrawable( helpDoc );
         //dialog.getWindow().setBackgroundDrawable(new ColorDrawable(android.graphics.Color.TRANSPARENT));
         dialog.setContentView(R.layout.help_page);
@@ -648,8 +658,8 @@ public class MainActivity extends AppCompatActivity implements DownloadCallback 
 
         final Dialog dialog = new Dialog(this);
         dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
-        ColorDrawable drawable = new ColorDrawable(Color.WHITE);
-        drawable.setAlpha(200);
+        ColorDrawable drawable = new ColorDrawable(getResources().getColor(R.color.colorPrimaryBackgroundHover));
+        //drawable.setAlpha(220);
         dialog.getWindow().setBackgroundDrawable(drawable);
         dialog.setContentView(R.layout.error_trace_page);
         dialog.setCanceledOnTouchOutside(true);
@@ -670,10 +680,11 @@ public class MainActivity extends AppCompatActivity implements DownloadCallback 
 
     public void showComment(){
 
+        final MainActivity mainActivity = this;
         final Dialog dialog = new Dialog(this);
         dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
-        ColorDrawable drawable = new ColorDrawable(Color.WHITE);
-        drawable.setAlpha(200);
+        ColorDrawable drawable = new ColorDrawable( getResources().getColor(R.color.colorPrimaryBackgroundHover)); // @color/colorPrimaryLight
+        //drawable.setAlpha(220);
         dialog.getWindow().setBackgroundDrawable(drawable);
         dialog.setContentView(R.layout.comment_page);
         dialog.setCanceledOnTouchOutside(true);
@@ -689,6 +700,50 @@ public class MainActivity extends AppCompatActivity implements DownloadCallback 
                     return false;
                 }
             });
+        TextView tv_comment_rcv = (TextView) dialog.findViewById(R.id.tv_comment_rcv);
+        tv_comment_rcv.setOnTouchListener(new View.OnTouchListener() {
+            public boolean onTouch(View v, MotionEvent event) {
+                Layout layout = ((TextView) v).getLayout();
+                int x = (int)event.getX();
+                int y = (int)event.getY();
+                if (layout!=null){
+                    int line = layout.getLineForVertical(y);
+                    int offset = layout.getOffsetForHorizontal(line, x);
+                    //toast("index[ " + line + ", " + offset+" ]");
+                    String titleCommented = null;
+                    TextView tv_comment_rcv = ((TextView) v);
+                    // simulate wraping  ...
+                    String text = tv_comment_rcv.getText().toString();
+                    List<String> textLines = new ArrayList<String>();
+                    String[] text2 = tv_comment_rcv.getText().toString().split("\n");
+                    // simulate text wrapping // KLUDGE - only more or less accurate ..
+                    // https://flowovertop.blogspot.de/2013/08/android-get-chars-to-fit-in-textview.html
+                    while(text.length()>0)
+                    {
+                        int totalCharstoFit= tv_comment_rcv.getPaint().breakText(text,  0, text.length(),
+                                true, tv_comment_rcv.getWidth(), null);
+                        int newLineAt = text.indexOf("\n");
+                        if ( -1 < newLineAt && newLineAt<totalCharstoFit) totalCharstoFit = newLineAt + 1;
+                        String textLine=text.substring(0, totalCharstoFit);
+                        textLines.add(textLine);
+                        text=text.substring(textLine.length(),text.length());
+
+                    }
+                    Pattern p = Pattern.compile("^> [0-9][0-9.:-]* (?:[1-9.]+ )?(.*):$");
+                    Matcher m = null ;
+                    line = Math.min(line+1, textLines.size());
+                    while (--line>= 0 && !(m = p.matcher( textLines.get(line))).find()) ;
+                    if (0 <= line && null != m ) {
+                        titleCommented = m.group(1);
+                        mainActivity.setTitleText( titleCommented);
+                        //TextView tv_title = (TextView) findViewById(R.id.tv_title);
+                        //tv_title.setText(titleCommented);
+                        dialog.dismiss();
+                    }
+                }
+                return true;
+            }
+        });
 
         class CommentDownloader implements DownloadCallback {
 
@@ -701,7 +756,9 @@ public class MainActivity extends AppCompatActivity implements DownloadCallback 
             public void updateFromDownload(Object result) {
                 if (null != result && result instanceof String) {
                     TextView tv_comment_rcv = (TextView) dialog.findViewById(R.id.tv_comment_rcv);
-                    tv_comment_rcv.setText( (String) result);
+                    String msg = Util.shortenDate((String) result);
+                    msg = msg.replaceAll("(.*)([^ ]:) ","> $1$2\n");
+                    tv_comment_rcv.setText( msg);
                 }
             }
         }

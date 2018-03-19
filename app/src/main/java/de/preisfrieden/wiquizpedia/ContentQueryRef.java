@@ -18,6 +18,11 @@ public class ContentQueryRef extends ContentQuery {
 
     public static String loadingTitle = "  L o a d i n g . .  ";
 
+    public ContentQueryRef(String nextTitle, Content content ) {
+        this(null, null, content);
+        if (null != nextTitle) this.title = nextTitle;
+    }
+
     public ContentQueryRef(List<String> potentialTitles, Content content ) {
         this(potentialTitles, null, content);
     }

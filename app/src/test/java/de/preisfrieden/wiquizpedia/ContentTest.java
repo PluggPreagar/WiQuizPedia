@@ -151,7 +151,7 @@ public class ContentTest extends Content {
     //
 
     @Test
-    public void testIntro(){
+    public void testIntroExtract(){
         String msgIntro = "{\n" +
                 "  \"batchcomplete\": true,\n" +
                 "  \"query\": {\n" +
@@ -169,10 +169,12 @@ public class ContentTest extends Content {
                 "}";
 
         String msgIntroNorm = normaliseContent( msgIntro);
-        String msgIntroNormSoll = "George Mallia (* 10. Oktober 1978 in Sliema) ist ein maltesischer Fußballspieler.\\n" +
-                "Mallia begann seine Karriere in der Maltese Premier League bei Sliema Wanderers. Dort spielte er vier Jahre und wechselte im Sommer 1998 zu Floriana FC." +
-                " Seit Sommer 2002 spielt er bei FC Birkirkara. Für die Nationalmannschaft kam er seit 1997 auf 60 Einsätze.\"";
-        assertEquals(msgIntroNormSoll, msgIntroNorm);
+        String msgIntroNormExpect = "George Mallia (* 10. Oktober 1978 in Sliema) ist ein maltesischer Fußballspieler.\n" +
+                "Mallia begann seine Karriere in der Maltese Premier League bei Sliema Wanderers.\n" +
+                "Dort spielte er vier Jahre und wechselte im Sommer 1998 zu Floriana FC.\n" +
+                "Seit Sommer 2002 spielt er bei FC Birkirkara.\n" +
+                "Für die Nationalmannschaft kam er seit 1997 auf 60 Einsätze.\n";
+        assertEquals(msgIntroNormExpect, msgIntroNorm);
 
     }
 
