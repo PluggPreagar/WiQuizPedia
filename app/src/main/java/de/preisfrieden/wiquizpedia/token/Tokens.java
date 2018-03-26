@@ -1,4 +1,4 @@
-package de.preisfrieden.wiquizpedia;
+package de.preisfrieden.wiquizpedia.token;
 
 import java.util.ArrayList;
 import java.util.Arrays;

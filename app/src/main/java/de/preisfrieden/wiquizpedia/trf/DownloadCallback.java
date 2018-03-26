@@ -1,4 +1,4 @@
-package de.preisfrieden.wiquizpedia;
+package de.preisfrieden.wiquizpedia.trf;
 
 import android.net.NetworkInfo;
 

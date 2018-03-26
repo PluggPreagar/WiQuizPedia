@@ -1,4 +1,4 @@
-package de.preisfrieden.wiquizpedia;
+package de.preisfrieden.wiquizpedia.util;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;

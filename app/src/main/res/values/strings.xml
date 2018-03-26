@@ -1,6 +1,7 @@
 <resources>
     <string name="app_name">WiQuizPedia</string>
     <string name="tv_title_message">Albert Einstein</string>
+    <string name="tv_title_hint">title to search for</string>
     <string name="button">Button</string>
     <string name="textview_message">load question ...</string>
     <string name="et_answer_message">direct answer ...</string>

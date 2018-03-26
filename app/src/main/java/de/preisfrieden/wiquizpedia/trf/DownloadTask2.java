@@ -1,17 +1,6 @@
-package de.preisfrieden.wiquizpedia;
+package de.preisfrieden.wiquizpedia.trf;
 
 import android.os.AsyncTask;
-
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.Reader;
-import java.io.UnsupportedEncodingException;
-import java.net.URL;
-import java.util.HashMap;
-import java.util.Map;
-
-import javax.net.ssl.HttpsURLConnection;
 
 /**
  * Created by peter on 15.02.2018.
@@ -23,7 +12,7 @@ public class DownloadTask2 extends AsyncTask<String, Void, String> {
 
     private DownloadCallback<String> mCallback;
 
-    DownloadTask2(DownloadCallback<String> callback) {
+    public DownloadTask2(DownloadCallback<String> callback) {
         setCallback(callback);
     }
     void setCallback(DownloadCallback<String> callback) {

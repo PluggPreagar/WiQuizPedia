@@ -1,7 +1,8 @@
 package de.preisfrieden.wiquizpedia;
 
-import android.app.Activity;
 import android.os.AsyncTask;
+
+import de.preisfrieden.wiquizpedia.trf.DownloadCallback;
 
 /**
  * Created by peter on 05.03.2018.
@@ -12,7 +13,7 @@ public class ContentTask extends AsyncTask<ContentTaskParam, Void, ContentQuery>
     private Content content = null;
     private static boolean running = false;
 
-    private  DownloadCallback<ContentQuery> mCallback;
+    private DownloadCallback<ContentQuery> mCallback;
 
     ContentTask(DownloadCallback<ContentQuery> callback) {
         setCallback(callback);

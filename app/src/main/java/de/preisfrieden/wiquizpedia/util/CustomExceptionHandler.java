@@ -1,4 +1,4 @@
-package de.preisfrieden.wiquizpedia;
+package de.preisfrieden.wiquizpedia.util;
 
 import android.content.Context;
 import android.os.AsyncTask;
@@ -17,18 +17,14 @@ import java.io.StringWriter;
 import java.io.UnsupportedEncodingException;
 import java.io.Writer;
 import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLEncoder;
-import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Date;
-import java.util.List;
 
 import javax.net.ssl.HttpsURLConnection;
 
-import static java.net.Proxy.Type.HTTP;
+import de.preisfrieden.wiquizpedia.MainActivity;
 
 /**
  * Created by peter on 12.03.2018.
@@ -40,7 +36,7 @@ public class CustomExceptionHandler implements Thread.UncaughtExceptionHandler {
 
     private Thread.UncaughtExceptionHandler defaultUEH;
     public static String localPath;
-    private String url;
+    private static String url;
     public static final String errorFileName = "error.txt";
 
     /*
@@ -51,6 +47,13 @@ public class CustomExceptionHandler implements Thread.UncaughtExceptionHandler {
         this.localPath = localPath;
         this.url = url;
         this.defaultUEH = Thread.getDefaultUncaughtExceptionHandler();
+    }
+
+    private CustomExceptionHandler() {
+    }
+
+    static public void uncaughtException( Throwable e) {
+        new CustomExceptionHandler().uncaughtException(null , e);
     }
 
     public void uncaughtException(Thread t, Throwable e) {
@@ -108,6 +111,7 @@ public class CustomExceptionHandler implements Thread.UncaughtExceptionHandler {
                 bos.flush();
                 bos.close();
             } catch (Exception e) {
+                CustomExceptionHandler.uncaughtException(e);
                 e.printStackTrace();
             }
         }

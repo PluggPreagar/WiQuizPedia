@@ -1,14 +1,9 @@
 package de.preisfrieden.wiquizpedia;
 
-import android.widget.CheckBox;
-
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.Random;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+
+import de.preisfrieden.wiquizpedia.token.Tokens;
 
 /**
  * Created by peter on 08.03.2018.

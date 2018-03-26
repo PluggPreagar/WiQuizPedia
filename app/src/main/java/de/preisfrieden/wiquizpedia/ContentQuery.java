@@ -1,18 +1,15 @@
 package de.preisfrieden.wiquizpedia;
 
-import android.widget.Toast;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Random;
-import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import de.preisfrieden.wiquizpedia.token.Tokens;
+import de.preisfrieden.wiquizpedia.util.Settings;
 
 
 /**
@@ -39,7 +36,7 @@ public class ContentQuery {
     }
 
 
-    public ContentQuery( List<String> msg_querable_sentences, Tokens token, Content content ) {
+    public ContentQuery(List<String> msg_querable_sentences, Tokens token, Content content ) {
         this.content = content;
         this.title = content.title;
         if (!msg_querable_sentences.isEmpty()) {

@@ -1,9 +1,8 @@
-package de.preisfrieden.wiquizpedia;
+package de.preisfrieden.wiquizpedia.gui;
 
 import android.app.Activity;
 import android.content.SharedPreferences;
 import android.os.Bundle;
-import android.preference.Preference;
 
 /**
  * Created by peter on 06.03.2018.

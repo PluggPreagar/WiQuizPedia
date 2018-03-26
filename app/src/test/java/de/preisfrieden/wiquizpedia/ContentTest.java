@@ -2,13 +2,9 @@ package de.preisfrieden.wiquizpedia;
 
 import org.junit.Test;
 
-import java.io.UnsupportedEncodingException;
-import java.net.URLEncoder;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+
+import de.preisfrieden.wiquizpedia.trf.DownloadCallback;
 
 import static org.junit.Assert.assertEquals;
 

@@ -1,4 +1,4 @@
-package de.preisfrieden.wiquizpedia;
+package de.preisfrieden.wiquizpedia.trf;
 
 import android.content.Context;
 import android.os.Environment;
@@ -7,6 +7,8 @@ import android.util.Log;
 import java.io.File;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+
+import de.preisfrieden.wiquizpedia.util.CustomExceptionHandler;
 
 /**
  * Created by peter on 11.03.2018.
@@ -24,6 +26,7 @@ public class FileCache {
         try {
             messageDigest = MessageDigest.getInstance("SHA-256");
         } catch (NoSuchAlgorithmException e) {
+            CustomExceptionHandler.uncaughtException(e);
             e.printStackTrace();
         }
         return messageDigest;

@@ -1,4 +1,4 @@
-package de.preisfrieden.wiquizpedia;
+package de.preisfrieden.wiquizpedia.trf;
 
 import android.util.Log;
 
@@ -11,11 +11,13 @@ import java.io.Reader;
 import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
 import javax.net.ssl.HttpsURLConnection;
+
+import de.preisfrieden.wiquizpedia.util.CustomExceptionHandler;
+import de.preisfrieden.wiquizpedia.util.Util;
 
 /**
  * Created by peter on 05.03.2018.
@@ -45,6 +47,7 @@ public class Download {
                     cache.put(urlString, result);
                     // if (resultString == null) throw new IOException("No response received.");
                 } catch (Exception e) {
+                    CustomExceptionHandler.uncaughtException(e);
                     e.printStackTrace();
                     //throw new IOException(e);
                 }
@@ -75,10 +78,11 @@ public class Download {
             // Retrieve the response body as an InputStream.
             stream = connection.getInputStream();
             //publishProgress(DownloadCallback.Progress.GET_INPUT_STREAM_SUCCESS, 0);
-            if (stream != null) {
-                result = null == fileName ? readStream(stream, 50000) : readStream(stream, fileName);// Converts Stream to String with max length of 500.
+            if (stream != null) { // KLUDGE to get FULL Einstein max ReadSize 50000 is not enought ...
+                result = null == fileName ? readStream(stream, 500000) : readStream(stream, fileName);// Converts Stream to String with max length of 500.
             }
         } catch(Exception e) {
+            CustomExceptionHandler.uncaughtException(e);
             e.printStackTrace();
             //throw new IOException(e);
         } finally {

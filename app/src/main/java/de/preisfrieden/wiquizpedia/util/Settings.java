@@ -1,4 +1,4 @@
-package de.preisfrieden.wiquizpedia;
+package de.preisfrieden.wiquizpedia.util;
 
 import android.app.Activity;
 import android.content.SharedPreferences;
@@ -32,7 +32,7 @@ public class Settings {
         mode = setIf == sp.getBoolean(name , 0 != (mode & mode_bit)) ? mode | mode_bit : mode & ~(mode_bit);
     }
 
-    static void readPreferences(Activity activity) {
+    public static void readPreferences(Activity activity) {
         SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences( activity);
         setMode4Preferences( sharedPref,"pref_auto_next", true,  MODE_AUTO_NEXT );
         setMode4Preferences( sharedPref,"pref_only_extract", false,  MODE_FULL );

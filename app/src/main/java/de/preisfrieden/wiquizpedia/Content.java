@@ -6,8 +6,10 @@ import org.json.JSONObject;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -16,6 +18,14 @@ import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.concurrent.Semaphore;
+
+import de.preisfrieden.wiquizpedia.token.Tokens;
+import de.preisfrieden.wiquizpedia.trf.Download;
+import de.preisfrieden.wiquizpedia.trf.DownloadCallback;
+import de.preisfrieden.wiquizpedia.trf.DownloadDrawable;
+import de.preisfrieden.wiquizpedia.trf.DownloadTask2;
+import de.preisfrieden.wiquizpedia.util.CustomExceptionHandler;
+import de.preisfrieden.wiquizpedia.util.Settings;
 
 /**
  * Created by peter on 21.02.2018.
@@ -35,6 +45,7 @@ public class Content {
     private DownloadCallback mCallback;
     private static Random random = new Random(System.nanoTime());
     private static Semaphore mutex = new Semaphore(1);
+    static final Integer curYear = Integer.valueOf( new SimpleDateFormat("yyyy").format(new Date()));
 
     static class ReplacePattern {
         String id;
@@ -57,6 +68,7 @@ public class Content {
         ,new ReplacePattern("BigNum", "\\b([0-9]+[.][0-9]+(?:,[0-9]+)?)\\b", -1)
         ,new ReplacePattern("Real", "\\b([0-9]+)\\b", -1)
         ,new ReplacePattern("Number", "\\b([0-9,]+)\\b", -1)
+        ,new ReplacePattern("RomNumber", "\\b([VXIMDC]+)\\b", -1)
         ,new ReplacePattern("Ort", "\\b(in\\s+[A-Z][^,. ]+)\\b", 0.80)
     }
     ;
@@ -109,6 +121,7 @@ public class Content {
         try {
             urlString = "https://de.wikipedia.org/wiki/" + URLEncoder.encode(title.replaceAll(" ","_"), "utf-8") ;
         } catch (UnsupportedEncodingException e) {
+            CustomExceptionHandler.uncaughtException(e);
             e.printStackTrace();
         }
         return urlString ;
@@ -123,10 +136,11 @@ public class Content {
 
     //
     //                  "https://de.wikipedia.org/w/api.php?action=query&prop=extracts&exintro=&explaintext=&redirects=&formatversion=2&format=json&titles=Albert+Einstein" -> "{"batchcomplete":true,"query":{"normalized":[{"fromencoded":false,"from":"Albert_Einstein","to":"Albert Einstein"}],"pages":[{"pageid":1278360,"ns":0,"title":"Albert Einstein","extract":"Albert Einstein (* 14. März 1879 in Ulm, Württemberg, Deutsches Reich; † 18. April 1955 in Princeton, New Jersey, Vereinigte Staaten) gilt als einer der bedeutendsten theoretischen Physiker der Wissenschaftsgeschichte. Seine Forschungen zur Struktur von Materie, Raum und Zeit sowie zum Wesen der Gravitation veränderten maßgeblich das zuvor geltende newtonsche Weltbild.\nEinsteins Hauptwerk, die Relativitätstheorie, machte ihn weltberühmt. Im Jahr 1905 erschien seine Arbeit mit dem Titel Zur Elektrodynamik bewegter Körper, deren Inhalt heute als spezielle Relativitätstheorie bezeichnet wird. 1915 publizierte er die allgemeine Relativitätstheorie. Auch zur Quantenphysik leistete er wesentliche Beiträge. „Für seine Verdienste um die theoretische Physik, besonders für seine Entdeckung des Gesetzes des photoelek"
-
+    //                   https://de.wikipedia.org/w/api.php?action=query&format=json&prop=revisions&redirects=1&formatversion=2&rvprop=content&titles=George_Mallia
     public static String getUrl(String query) {
         String urlStr = "https://de.wikipedia.org/w/api.php?action=query&prop=extracts&exintro=&explaintext=&redirects=&formatversion=2&format=json";
-        if ( 0 != (Settings.mode & Settings.MODE_FULL)) urlStr = urlStr.replace("&exintro=&","&exsentences=50&");
+        //if ( 0 != (Settings.mode & Settings.MODE_FULL)) urlStr = urlStr.replace("&exintro=&","&exsentences=50&"); // extsentences maximal 10, dürfen aber fehlen, dann alles
+        if ( 0 != (Settings.mode & Settings.MODE_FULL)) urlStr = urlStr.replace("&exintro=&","&"); // extsentences maximal 10, dürfen aber fehlen, dann alles
         if (query.isEmpty()) {
             urlStr += "&generator=random";
             urlStr += "&grnlimit=20";
@@ -134,6 +148,7 @@ public class Content {
             try {
                 urlStr += "&titles=" + URLEncoder.encode(query, "utf-8");
             } catch (UnsupportedEncodingException e) {
+                CustomExceptionHandler.uncaughtException(e);
                 e.printStackTrace();
             }
         }
@@ -207,6 +222,8 @@ public class Content {
                     }
                 }
             } catch (JSONException e) {
+                // W/System.err: org.json.JSONException: Unterminated string at character 50000 of {"batchcomplete":true,"warnings":{"extracts":{"warnings":"\"exlimit\" was too large for a whole article extracts request, lowered to 1."}},"query":{"normalized":[{"fromencoded":false,"from":"Albert Einstein ","to":"Albert Einstein"}],"pages":[{"pageid":1278360,"ns":0,"title":"Albert Einstein","extract":"Albert Einstein (* 14. März 1879 in Ulm, Württemberg, Deutsches Reich; † 18. April 1955 in Princeton, New Jersey, Vereinigte Staaten) gilt als einer der bedeutendsten theoretischen Physiker der Wissenschaftsgeschichte. Seine Forschungen zur Struktur von Materie, Raum und Zeit sowie zum Wesen der Gravitation veränderten maßgeblich das zuvor geltende newtonsche Weltbild.\nEinsteins Hauptwerk, die Relativitätstheorie, machte ihn weltberühmt. Im Jahr 1905 erschien seine Arbeit mit dem Titel Zur Elektrodynamik bewegter Körper, deren Inhalt heute als spezielle Relativitätstheorie bezeichnet wird. 1915 publizierte er die allgemeine Relativitätstheorie. Auch zur Quantenphysik leistete er wesentliche Beiträge. „Für seine Verdienste um die theoretische Physik, besonders für seine Entdeckung des Gesetzes des photoelektrischen Effekts“, erhielt er den Nobelpreis des Jahres 1921, der ihm 1922 überreicht wurde. Seine theoretischen Arbeiten spielten – im Gegensatz zur verbreiteten Meinung – beim Bau der Atombombe und der Entwicklung der Kernenergie nur eine indirekte Rolle.Albert Einstein gilt als Inbegriff des Forschers und Genies. Er nutzte seine außerordentliche Bekanntheit auch außerhalb der naturwissenschaftlichen Fachwelt bei seinem Einsatz für Völkerverständigung und Frieden. In diesem Zusammenhang verstand er sich selbst als Pazifist, Sozialist und Zionist.\nIm Laufe seines Lebens war Einstein Staatsbürger mehrerer Länder: Durch Geburt besaß er die württembergische Staatsbürgerschaft. Von 1896 bis 1901 staatenlos, ab 1901 bis zu seinem Tode Staatsbürger der Schweiz, war er 1911/12 in Österreich-Ungarn auch Bürger Österreichs. Von 1914 bis 1932 lebte Einstein in Berlin und war als Bürger Preußens erneut Staatsangehöriger im Deutschen Reich. Mit der Machtergreifung Hitlers gab er 1933 den deutschen Pass endgültig ab und wurde 1934 vom Deutschen Reich strafausgebürgert. Zusätzlich zu seinem seit 1901 geltenden Schweizer Bürgerrecht erwarb er 1940 noch die amerikanische Staatsbürgerschaft.\n\n\n== Leben ==\n\n\n=== Kindheit und Jugend ===\n\n\n==== Vorfahren und Elternhaus ====\n\nDie Eltern Hermann Einstein (30. August 1847 bis 10. Oktober 1902) und Pauline Einstein geb. Koch (8. Februar 1858 bis 20. Februar 1920, geboren in Cannstatt, Württemberg; gestorben in Berlin) entstammten beide alteingesessenen jüdischen Familien, die schon seit Jahrhunderten im schwäbischen Raum ansässig waren. Die Großeltern mütterlicherseits hatten ihren Nachnamen Dörzbacher in Koch geändert. Die Großeltern väterlicherseits trugen noch traditionell jüdische Namen, Abraham und Hindel Einstein. Mit den Eltern Albert Einsteins änderte sich das.\nSein Vater Hermann Einstein stammte aus der oberschwäbischen Kleinstadt Buchau, in der es seit dem Mittelalter innerhalb des Territoriums des freiweltlichen Damenstifts Buchau eine bedeutende jüdische Gemeinde gab (Siehe auch: Bad Buchau#Familie Einstein.) Der erste namentlich nachgewiesene Vorfahre Albert Einsteins, ein aus dem Bodenseeraum stammender Pferde- und Tuchhändler namens Baruch Moses Ainstein, wurde im 17. Jahrhundert in die Gemeinde aufgenommen. Auf den Grabsteinen des Buchauer jüdischen Friedhofs sind noch heute die Namen vieler Verwandter Einsteins zu finden; so unter anderen auch der des letzten Juden Buchaus, Siegbert Einstein, eines Großneffen des Physikers, der das KZ Theresienstadt überlebt hatte und nach dem Zweiten Weltkrieg zeitweise zweiter Bürgermeister der Stadt Buchau war.\nHermann Einstein übersiedelte mit seinen Brüdern 1869 nach Ulm. Dort heiratete er 1876 Pauline Koch und lebte in der Bahnhofstraße B135, wo Albert Einstei
+                CustomExceptionHandler.uncaughtException(e);
                 e.printStackTrace();
             }
         }
@@ -253,6 +270,8 @@ public class Content {
     }
 
     protected String parseTitle(String msg) {
+        if (null != msg) msg = msg.replaceAll("\\n\\n== Weblinks ==\\n\\n .*", ""); // == Weblinks == start new section ...
+        //msg = msg.replaceAll("\\n== .*", ""); //
         title = null == msg ? "" : msg.replaceAll("\\n","").replaceAll("^.*?\"title\":\\s*\"", "").replaceAll("\".*", "");
         return title;
     }
@@ -279,7 +298,9 @@ public class Content {
         }
         msg = msg.replaceAll("\\\\n", "\n");
         msg = msg.replaceAll("(\\d{2}\\.)\\s+(Januar|Februar|März|April|Mai|Juni|Juli|August|September|Oktober|November|Dezember)\\s*(\\d{2,4})", "$1&nbsp;$2&nbsp;$3"); // 14. März 1879 -> 14.März.1879 sep Date from End of Sentencte
-        msg = msg.replaceAll("(?<!\\d)\\.\\s*(?![a-z ])", ".\n");
+        //  Look-behind pattern matches must have a bounded maximum length
+        //msg = msg.replaceAll("(.{20,20})(?<!\\d)\\.\\s*(?![a-z ])", "$1.\n"); // at least 60 char / must not be direct begind digit
+        msg = msg.replaceAll("(?<!\\d)\\.\\s*(?![a-z ])", ".\n"); // at least 60 char / must not be direct begind digit
         msg = msg.replaceAll("&nbsp;", " ");
         return msg;
     }
@@ -295,6 +316,31 @@ public class Content {
             }
         }
         return msg;
+    }
+
+
+    public  void generateDummyAnswer(String tokenCategory) {
+        Integer relativeTo = null != tokenCategory && tokenCategory.contains("Year") ? curYear : 0 ;
+        ArrayList<String> nums = new ArrayList<String>(token.emptyIfNull(token.getTokens4Category(tokenCategory))); // clone, as we will sort ..
+        if (!nums.isEmpty() && nums.size() < 7){
+            Collections.sort(nums);
+            try {
+                Integer minYear = Integer.valueOf(nums.get(0));
+                Integer maxYear = Integer.valueOf(nums.get(nums.size()-1));
+                Integer diffYear = maxYear - minYear;
+                if (0 != relativeTo) diffYear += (int) (((double) relativeTo - maxYear ) * 0.2) + 1;
+                Integer minminYear = minYear - diffYear ;
+                Integer maxmaxYear = maxYear + diffYear ;
+                if (maxYear <= relativeTo && maxmaxYear > relativeTo && 0 != relativeTo) maxmaxYear = relativeTo;
+                int size = 0;
+                while (size<7) {
+                    String year = String.valueOf(minminYear + random.nextInt( (int) (maxmaxYear-minminYear)));
+                    size = token.getIdx(token.add(year, tokenCategory));
+                }
+            } catch (Exception e) {
+            }
+
+        }
     }
 
     protected String extractAndReplaceValues(String msg) {
@@ -330,26 +376,12 @@ public class Content {
         */
         // add dummy years ...
 
-        ArrayList<String> years = new ArrayList<String>(token.emptyIfNull(token.getTokens4Category("Year"))); // clone, as we will sort ..
-        if (!years.isEmpty() && years.size() < 7){
-            Collections.sort(years);
-            try {
-                Integer minYear = Integer.valueOf(years.get(0));
-                Integer maxYear = Integer.valueOf(years.get(years.size()-1));
-                Integer diffYear = maxYear - minYear;
-                diffYear += (int) (((double) 2017 - maxYear ) * 0.2) + 1;
-                Integer minminYear = minYear - diffYear ;
-                Integer maxmaxYear = maxYear + diffYear ;
-                int size = 0;
-                while (size<7) {
-                    String year = String.valueOf(minminYear + random.nextInt( (int) (maxmaxYear-minminYear)));
-                    size = token.getIdx(token.add(year, "Year"));
-                }
-            } catch (Exception e) {
-            }
-
-        }
-
+        generateDummyAnswer("Year");
+        generateDummyAnswer("Real");
+        // generateDummyAnswer("RangAdj");
+        // generateDummyAnswer("RangNum");
+        // generateDummyAnswer("Number");
+        // generateDummyAnswer("RomNumber");
 
         // TODO remove groups wo option
         return msg;
@@ -368,13 +400,14 @@ public class Content {
         while (m.find()) {
             String value = "";
             String key  = "";
-            boolean keep = random.nextDouble() <= percent2keep;
+            boolean keep = random.nextDouble() <= percent2keep ;
             for (int i = 2; i <= m.groupCount(); i++) value += m.group(i);
             if (value.length()>1) {
                 key = categoryOrId.startsWith("__") ? categoryOrId : token.add(value, categoryOrId);
             } else {
                 keep = true;
             }
+            keep |=  title.contains( value );
             matched += keep ? m.group(0) : m.group(1) + key;
             matchLen += m.group(0).length();
         }
@@ -385,7 +418,12 @@ public class Content {
         String[] sentences = msg.split("\n");
         List<String> query_sentences = new ArrayList<String>();
         for (String sentence : sentences) {
-            if (sentence.contains("__")) query_sentences.add(sentence);
+            if (sentence.contains("__")) {
+                query_sentences.add(sentence);
+            } else if (!query_sentences.isEmpty()){
+                int last = query_sentences.size()-1;
+                query_sentences.set( last, query_sentences.get(last) + sentence);
+            };
         }
         return query_sentences;
     }

@@ -13,13 +13,11 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Environment;
 import android.os.Handler;
-import android.os.PatternMatcher;
 import android.preference.PreferenceManager;
 import android.support.annotation.RequiresApi;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.text.Layout;
-import android.util.Log;
 import android.view.GestureDetector;
 import android.view.KeyEvent;
 import android.view.Menu;
@@ -49,9 +47,19 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import de.preisfrieden.wiquizpedia.gui.SettingsActivity;
+import de.preisfrieden.wiquizpedia.trf.Download;
+import de.preisfrieden.wiquizpedia.trf.DownloadCallback;
+import de.preisfrieden.wiquizpedia.trf.DownloadTask2;
+import de.preisfrieden.wiquizpedia.util.AutoCompleteAdapter;
+import de.preisfrieden.wiquizpedia.util.CustomExceptionHandler;
+import de.preisfrieden.wiquizpedia.util.OnSwipeTouchListener;
+import de.preisfrieden.wiquizpedia.util.Settings;
+import de.preisfrieden.wiquizpedia.util.Util;
+
 
 @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
-public class MainActivity extends AppCompatActivity implements DownloadCallback  {
+public class MainActivity extends AppCompatActivity implements DownloadCallback {
 
 
     /*
@@ -91,6 +99,7 @@ public class MainActivity extends AppCompatActivity implements DownloadCallback 
     private static String picTitle;
     private static String curTitle;
     private static boolean firstRun = true;
+    private static Drawable curImage ;
 
     OnSwipeTouchListener swipeTouchListener;
     private String initTitle = "Albert Einstein";
@@ -120,6 +129,7 @@ public class MainActivity extends AppCompatActivity implements DownloadCallback 
             version = context.getPackageManager()
                     .getPackageInfo(context.getPackageName(), 0).versionName;
         } catch (PackageManager.NameNotFoundException e) {
+            CustomExceptionHandler.uncaughtException(e);
             e.printStackTrace();
         }
         version = null == version ? "" : version;
@@ -185,7 +195,13 @@ public class MainActivity extends AppCompatActivity implements DownloadCallback 
 
             @Override
             public void onLongPress2() {
-                MainActivity.toast("longPress ... list random pages");
+                MainActivity.toast("longPress ... open external");
+                callUrl4Content();
+            }
+
+            @Override
+            public boolean onDoubleTap2() {
+                MainActivity.toast("double tap ... list random pages");
                 ContentQuery queryRef = content.createQueryRef();
                 if (null != queryRef) {
                     updateFromDownload(queryRef);
@@ -194,12 +210,6 @@ public class MainActivity extends AppCompatActivity implements DownloadCallback 
                     query = null;
                     redraw();
                 }
-            }
-
-            @Override
-            public boolean onDoubleTap2() {
-                MainActivity.toast("open external");
-                callUrl4Content();
                 return true;
             }
         };
@@ -264,6 +274,8 @@ public class MainActivity extends AppCompatActivity implements DownloadCallback 
             picTitle = picTitleNew;
             setImageView( (Drawable) null);
             if (!query.title.isEmpty()) Content.updatePicFromData( query.title, this);
+        } else {
+            setImageView( curImage);
         }
 
         msg = query.msg;
@@ -349,7 +361,7 @@ public class MainActivity extends AppCompatActivity implements DownloadCallback 
                 public boolean onKey(View v, int keyCode, KeyEvent event) {
                     if (event.getAction() == KeyEvent.ACTION_DOWN && keyCode == KeyEvent.KEYCODE_ENTER) {
                         String text = handleSpecialCommand( tv_answer, MainActivity.this );
-                        tv_answer.setBackgroundColor( null == text || placeholder_text.equals(text) ? Color.TRANSPARENT : checkAnswer(text) ? Color.GREEN : Color.RED);
+                        tv_answer.setBackgroundColor( null == text || text.isEmpty() ? Color.TRANSPARENT : checkAnswer(text) ? Color.GREEN : Color.RED);
                         return true;
                     }
                     return false;
@@ -361,12 +373,13 @@ public class MainActivity extends AppCompatActivity implements DownloadCallback 
             tv_answer.setVisibility( View.VISIBLE);
             tv_answer.setTextColor(Color.BLACK);
             tv_answer.setBackgroundColor(Color.TRANSPARENT);
-            tv_answer.setText(placeholder_text);
+            tv_answer.setText("");
         }
     }
 
     protected void setImageView( Drawable drawable){
         ImageView imageView = (ImageView) findViewById(R.id.imageView);
+        curImage = drawable;
         if (null == drawable) {
             imageView.setImageResource( R.mipmap.ic_launcher_foreground_v0a1 );
         } else {
@@ -407,11 +420,18 @@ public class MainActivity extends AppCompatActivity implements DownloadCallback 
         final AutoCompleteTextView tv_title = (AutoCompleteTextView) findViewById( R.id.tv_title);
         if (null == nullOrTitle) {
             nullOrTitle = initTitle;
+            tv_title.setOnFocusChangeListener(new View.OnFocusChangeListener() {
+                @Override
+                public void onFocusChange(View view, boolean gainFocus) {
+                    if (gainFocus) {
+                        setTitleText("", false);
+                        tv_title.setDropDownHeight( WindowManager.LayoutParams.WRAP_CONTENT );
+                    }
+                }
+            });
             tv_title.setOnClickListener(new View.OnClickListener() {
                 @Override
-                public void onClick(View view) {
-                    setTitleText("", false);
-                    tv_title.setDropDownHeight( WindowManager.LayoutParams.WRAP_CONTENT );
+                public void onClick(View view) { // or get problem as return type from onKey ist different to onClick - why that ????
                 }
             });
             tv_title.setOnKeyListener(new OnKeyListener() {
@@ -500,13 +520,16 @@ public class MainActivity extends AppCompatActivity implements DownloadCallback 
     //
 
     public void callUrl4Content() {
-        try {
-            Intent myIntent = new Intent(Intent.ACTION_VIEW, Uri.parse( content.getURL2View() ));
-            startActivity(myIntent);
-        } catch (ActivityNotFoundException e) {
-            Toast.makeText(this, "No application can handle this request."
-                    + " Please install a webbrowser",  Toast.LENGTH_LONG).show();
-            e.printStackTrace();
+        if (null != content) {
+            try {
+                Intent myIntent = new Intent(Intent.ACTION_VIEW, Uri.parse( content.getURL2View() ));
+                startActivity(myIntent);
+            } catch (ActivityNotFoundException e) {
+                CustomExceptionHandler.uncaughtException(e);
+                Toast.makeText(this, "No application can handle this request."
+                        + " Please install a webbrowser",  Toast.LENGTH_LONG).show();
+                e.printStackTrace();
+            }
         }
     }
 
@@ -546,6 +569,7 @@ public class MainActivity extends AppCompatActivity implements DownloadCallback 
                         Date dateNew = dateFormat.parse(newVersion);
                         minutesDiff = (dateNew.getTime() - dateThis.getTime()) / 1000 / 60;
                     } catch (ParseException e) {
+                        CustomExceptionHandler.uncaughtException(e);
                         e.printStackTrace();
                     }
                     if (null == minutesDiff) {
@@ -584,6 +608,7 @@ public class MainActivity extends AppCompatActivity implements DownloadCallback 
                         String trace = new Download().readStream(new FileInputStream(file), 5000);
                         showErrorTrace( modTime + ":\n" + trace + "\n\n\t\t\t(click to close)\n\n");
                     } catch (IOException e) {
+                        CustomExceptionHandler.uncaughtException(e);
                         e.printStackTrace();
                     }
                     /*
@@ -636,9 +661,9 @@ public class MainActivity extends AppCompatActivity implements DownloadCallback 
     public void showHelp(){
 
         final Dialog dialog = new Dialog(this);
-        //dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
-        Drawable helpDoc = getResources().getDrawable(R.mipmap.screenshot_help_dok4_head);
-        helpDoc.setAlpha(220);
+        dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
+        Drawable helpDoc = getResources().getDrawable(R.mipmap.screenshot_help_dok6_head_backg);
+        helpDoc.setAlpha(200);
         dialog.getWindow().setBackgroundDrawable( helpDoc );
         //dialog.getWindow().setBackgroundDrawable(new ColorDrawable(android.graphics.Color.TRANSPARENT));
         dialog.setContentView(R.layout.help_page);
@@ -666,7 +691,7 @@ public class MainActivity extends AppCompatActivity implements DownloadCallback 
         //for dismissing anywhere you touch
         TextView tv = (TextView) dialog.findViewById(R.id.tv_error_trace);
         txt = txt.replaceAll("at\\s+.*WiQuizPedia","at WQP");
-        txt = txt.replaceAll("at\\s+[a-z.]*","at ");
+        txt = txt.replaceAll("at\\s+[a-zA-Z.]*\\.","at ");
         tv.setText(txt);
         tv.setOnClickListener(new View.OnClickListener() {
 
@@ -786,6 +811,8 @@ public class MainActivity extends AppCompatActivity implements DownloadCallback 
 
             DownloadHandlerApk() {
                 DownloadTask2 downloadTask = new DownloadTask2( this );
+                // beim download dieses paketes ist ein fehler aufgetreten...
+                //downloadTask.execute("http://preisfrieden.de/WiQuizPedia/app", DownloadTask2.FORCELOAD, apkFile.getAbsolutePath() );
                 downloadTask.execute("http://preisfrieden.de/WiQuizPedia/app-release.apk", DownloadTask2.FORCELOAD, apkFile.getAbsolutePath() );
             }
 
@@ -803,6 +830,7 @@ public class MainActivity extends AppCompatActivity implements DownloadCallback 
                         startActivity(myIntent);
                     } catch (ActivityNotFoundException e) {
                         MainActivity.toast( "No application can handle this request." + " Please install a webbrowser");
+                        CustomExceptionHandler.uncaughtException(e);
                         e.printStackTrace();
                     }
                 }

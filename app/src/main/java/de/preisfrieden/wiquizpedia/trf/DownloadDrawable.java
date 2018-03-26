@@ -1,4 +1,4 @@
-package de.preisfrieden.wiquizpedia;
+package de.preisfrieden.wiquizpedia.trf;
 
 import android.content.res.Resources;
 import android.graphics.Bitmap;
@@ -11,14 +11,10 @@ import android.util.Log;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.Reader;
-import java.io.UnsupportedEncodingException;
 import java.net.URL;
-import java.util.HashMap;
-import java.util.Map;
 
-import javax.net.ssl.HttpsURLConnection;
+import de.preisfrieden.wiquizpedia.MainActivity;
+import de.preisfrieden.wiquizpedia.util.CustomExceptionHandler;
 
 /**
  * Created by peter on 15.02.2018.
@@ -29,7 +25,7 @@ public class DownloadDrawable extends AsyncTask<String, Void, Drawable> {
     private DownloadCallback<Drawable> mCallback;
     private static boolean already_running = false;
 
-    DownloadDrawable(DownloadCallback<Drawable> callback) {
+    public DownloadDrawable(DownloadCallback<Drawable> callback) {
         setCallback(callback);
     }
     void setCallback(DownloadCallback<Drawable> callback) {
@@ -53,9 +49,11 @@ public class DownloadDrawable extends AsyncTask<String, Void, Drawable> {
                 // drawable = decodeSampleBitmapFromResource( Drawable.createFromStream(iStream, "src name"), 10, 10);
             } catch (IOException e) {
                 Log.e("error","Error loading from URL: " + urls[0]);
+                CustomExceptionHandler.uncaughtException(e);
                 e.printStackTrace();
             } catch (Exception e) {
                 Log.e("error","Error creating image ..: " + urls[0]);
+                CustomExceptionHandler.uncaughtException(e);
                 e.printStackTrace();
             } finally {
                 already_running = false;
